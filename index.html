@@ -2738,8 +2738,8 @@ Be supportive, realistic, and evidence-based. Provide specific insights based on
                     }
                 }
 
-                // Call Google Gemini API - using gemini-1.5-flash (FREE tier)
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GOOGLE_AI_API_KEY}`, {
+                // Call Google Gemini API - using gemini-2.5-flash (confirmed available from API)
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_API_KEY}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -2778,7 +2778,7 @@ Be supportive, realistic, and evidence-based. Provide specific insights based on
                 let errorMsg = '❌ Error Details:\n\n';
                 if (error.message.includes('404')) {
                     errorMsg += '404: Model not found\n\n';
-                    errorMsg += 'Tried: gemini-1.5-flash-latest\n\n';
+                    errorMsg += 'Tried: gemini-2.5-flash\n\n';
                     errorMsg += 'This model might not be available with your API key.';
                 } else if (error.message.includes('403') || error.message.includes('401')) {
                     errorMsg += '403/401: Authentication failed\n\n';
