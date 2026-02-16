@@ -2616,7 +2616,7 @@
                     // Auto-send analysis prompt
                     setTimeout(() => {
                         const input = document.getElementById('aiChatInput');
-                        input.value = 'Check my habits and tell me how it will improve my main parts of life in 1, 3, 6, 12 months.';
+                        input.value = 'Show my improvements in 1, 3, 6, 12 months with specific numbers and percentages. Keep it short.';
                         sendAIMessage();
                     }, 500);
                 } else {
@@ -2706,11 +2706,28 @@
                 const habitContext = prepareHabitContext();
 
                 // Build conversation history for Gemini
-                let conversationText = `You are a helpful AI habit coach. You have access to the user's habit tracking data and should provide personalized advice based on their actual progress.
+                let conversationText = `You are an AI habit coach. Focus on NUMBERS and DATA.
 
 ${habitContext}
 
-Be supportive, realistic, and evidence-based. Provide specific insights based on their data. Keep responses concise and actionable.
+RESPONSE RULES:
+1. Keep responses SHORT (max 200 words)
+2. Use NUMBERS heavily (%, km, days, improvements)
+3. Format with clear sections using emojis
+4. Use bullet points
+5. Be direct and specific
+6. No long paragraphs
+
+EXAMPLE FORMAT:
+📊 **Current Stats**
+• Stat 1: X number
+• Stat 2: Y %
+
+⏱️ **1 Month**
+• Change 1: +X%
+• Change 2: Y km
+
+Structure ALL responses this way.
 
 `;
 
