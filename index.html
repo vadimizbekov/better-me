@@ -1462,7 +1462,10 @@
                 dayCard.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <div style="font-weight: 700; font-size: 16px;">${formattedDate}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">${completedCount}/${habits.length} completed</div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">${completedCount}/${habits.length} completed</div>
+                            <button onclick="editDay('${date}')" style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">Edit</button>
+                        </div>
                     </div>
                     ${habitsHTML}
                     ${dayData.mood ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 14px; color: var(--text-secondary);">Mood: ${dayData.mood}/10</div>` : ''}
@@ -1471,6 +1474,19 @@
 
                 container.appendChild(dayCard);
             });
+        }
+
+        function editDay(date) {
+            // Switch to Log Entry tab
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector('.tab[onclick*="log"]').classList.add('active');
+
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('logView').classList.add('active');
+
+            // Load the selected date
+            selectedDateKey = date;
+            loadLogView();
         }
 
         function loadSettingsView() {
