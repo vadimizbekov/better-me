@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Better Me</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -600,6 +605,21 @@
     </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbdjv2kmYl9em_E1Xd3G_m3TPJ-308o68",
+            authDomain: "better-me-8e533.firebaseapp.com",
+            projectId: "better-me-8e533",
+            storageBucket: "better-me-8e533.firebasestorage.app",
+            messagingSenderId: "200319965841",
+            appId: "1:200319965841:web:37bbc5588fdd8e8b16bd30",
+            databaseURL: "https://better-me-8e533-default-rtdb.firebaseio.com"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         // Data structure with default targets
         let habits = [
             { id: 'running', name: 'Running', emoji: '🏃', hasMetric: true, metricLabel: 'km', target: 4 },
@@ -610,11 +630,13 @@
             { id: 'fitness', name: 'Fitness', emoji: '💪', hasMetric: true, metricLabel: 'min', target: 3 }
         ];
 
-        let data = loadData();
-        let settings = loadSettings();
+        let data = {};
+        let settings = {};
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadDataFromFirebase();
+            await loadSettingsFromFirebase();
             loadSettingsIntoHabits();
             updateCurrentDate();
             loadTodayView();
@@ -624,22 +646,43 @@
             renderWeekCalendar();
         });
 
-        function loadData() {
-            const saved = localStorage.getItem('betterMeData');
-            return saved ? JSON.parse(saved) : {};
+        // Firebase Data Functions
+        async function loadDataFromFirebase() {
+            try {
+                const snapshot = await database.ref('habitData').once('value');
+                data = snapshot.val() || {};
+            } catch (error) {
+                console.error('Error loading data:', error);
+                data = {};
+            }
         }
 
-        function saveData() {
-            localStorage.setItem('betterMeData', JSON.stringify(data));
+        async function saveData() {
+            try {
+                await database.ref('habitData').set(data);
+            } catch (error) {
+                console.error('Error saving data:', error);
+                alert('⚠️ Error saving data. Please try again.');
+            }
         }
 
-        function loadSettings() {
-            const saved = localStorage.getItem('betterMeSettings');
-            return saved ? JSON.parse(saved) : {};
+        async function loadSettingsFromFirebase() {
+            try {
+                const snapshot = await database.ref('settings').once('value');
+                settings = snapshot.val() || {};
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                settings = {};
+            }
         }
 
-        function saveSettingsData() {
-            localStorage.setItem('betterMeSettings', JSON.stringify(settings));
+        async function saveSettingsData() {
+            try {
+                await database.ref('settings').set(settings);
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                alert('⚠️ Error saving settings. Please try again.');
+            }
         }
 
         function loadSettingsIntoHabits() {
@@ -747,7 +790,7 @@
             }
         }
 
-        function saveEntry() {
+        async function saveEntry() {
             const todayKey = getTodayKey();
 
             if (!data[todayKey]) {
@@ -777,10 +820,10 @@
             if (mood) data[todayKey].mood = parseInt(mood);
             if (notes) data[todayKey].notes = notes;
 
-            saveData();
+            await saveData();
 
             // Show success feedback
-            alert('✅ Entry saved successfully!');
+            alert('✅ Entry saved to cloud successfully!');
 
             // Refresh views
             loadTodayView();
@@ -1085,7 +1128,7 @@
             });
         }
 
-        function saveSettings() {
+        async function saveSettings() {
             habits.forEach(habit => {
                 const input = document.getElementById('target-' + habit.id);
                 if (input && input.value) {
@@ -1097,8 +1140,8 @@
                 }
             });
 
-            saveSettingsData();
-            alert('✅ Settings saved successfully!');
+            await saveSettingsData();
+            alert('✅ Settings saved to cloud successfully!');
 
             // Refresh all views with new targets
             updateStats();
