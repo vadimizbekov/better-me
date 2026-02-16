@@ -195,6 +195,160 @@
             cursor: pointer;
         }
 
+        /* Modern Habit Cards */
+        .habit-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .habit-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .habit-card.active {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .habit-toggle-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .habit-icon {
+            font-size: 32px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border-radius: 12px;
+        }
+
+        .habit-info {
+            flex: 1;
+        }
+
+        .habit-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .habit-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 56px;
+            height: 32px;
+            background: var(--border);
+            border-radius: 16px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .toggle-switch.active {
+            background: var(--success);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            left: 28px;
+        }
+
+        /* Metric Input Slide-in */
+        .metric-input-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .metric-input-container.show {
+            max-height: 100px;
+            margin-top: 16px;
+        }
+
+        .metric-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg);
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .metric-input-wrapper input {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            min-width: 60px;
+        }
+
+        /* Date Selector */
+        .date-selector {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .date-selector-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .date-selector-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .date-selector input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+        }
+
         .habit-input {
             width: 100%;
             padding: 10px;
@@ -644,111 +798,36 @@
 
         <!-- TRACKER VIEW (Combined Log + History) -->
         <div id="trackerView" class="view">
-            <!-- Date Picker -->
-            <div class="card" style="margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <label style="font-weight: 600; min-width: 80px;">Edit date:</label>
-                    <input
-                        type="date"
-                        id="selectedDate"
-                        class="habit-input"
-                        style="flex: 1; margin: 0;"
-                        onchange="loadSelectedDate()">
-                </div>
+            <!-- Date Selector -->
+            <div class="date-selector">
+                <div class="date-selector-label">Tracking for</div>
+                <div class="date-selector-value" id="reviewDateDisplay">Today</div>
+                <input
+                    type="date"
+                    id="selectedDate"
+                    onchange="loadSelectedDate()">
             </div>
 
-            <!-- Week Calendar -->
-            <div class="week-calendar" id="weekCalendar">
+            <!-- Modern Habit Cards -->
+            <div id="modernHabits">
                 <!-- Populated by JS -->
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Evening Review</h2>
-                    <span id="reviewDate">Today</span>
-                </div>
-                <div class="habit-list">
-                    <!-- Running -->
-                    <div class="habit-item" id="habit-running">
-                        <div class="habit-header">
-                            <span class="habit-name">🏃 Running</span>
-                            <input type="checkbox" class="habit-checkbox" id="running-done" onchange="updateHabitStatus('running')">
-                        </div>
-                        <div class="habit-metric">
-                            <label>Distance (km)</label>
-                            <input type="number" step="0.1" id="running-km" placeholder="0.0">
-                        </div>
+            <!-- Mood & Notes Card -->
+            <div class="card" style="margin-top: 20px;">
+                <div style="padding: 16px;">
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-weight: 600; font-size: 16px; margin-bottom: 8px; display: block;">😊 How was your day? (1-10)</label>
+                        <input type="number" min="1" max="10" id="mood" placeholder="7" style="width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px;">
                     </div>
-
-                    <!-- Ice Baths -->
-                    <div class="habit-item" id="habit-icebaths">
-                        <div class="habit-header">
-                            <span class="habit-name">🧊 Ice Baths</span>
-                            <input type="checkbox" class="habit-checkbox" id="icebaths-done" onchange="updateHabitStatus('icebaths')">
-                        </div>
-                    </div>
-
-                    <!-- Meditation -->
-                    <div class="habit-item" id="habit-meditation">
-                        <div class="habit-header">
-                            <span class="habit-name">🧘 Meditation</span>
-                            <input type="checkbox" class="habit-checkbox" id="meditation-done" onchange="updateHabitStatus('meditation')">
-                        </div>
-                        <div class="habit-metric">
-                            <label>Duration (min)</label>
-                            <input type="number" step="1" id="meditation-min" placeholder="0">
-                        </div>
-                    </div>
-
-                    <!-- Diary -->
-                    <div class="habit-item" id="habit-diary">
-                        <div class="habit-header">
-                            <span class="habit-name">📔 Diary</span>
-                            <input type="checkbox" class="habit-checkbox" id="diary-done" onchange="updateHabitStatus('diary')">
-                        </div>
-                    </div>
-
-                    <!-- English Lessons -->
-                    <div class="habit-item" id="habit-english">
-                        <div class="habit-header">
-                            <span class="habit-name">🗣️ English Lessons</span>
-                            <input type="checkbox" class="habit-checkbox" id="english-done" onchange="updateHabitStatus('english')">
-                        </div>
-                    </div>
-
-                    <!-- Fitness at Home -->
-                    <div class="habit-item" id="habit-fitness">
-                        <div class="habit-header">
-                            <span class="habit-name">💪 Fitness at Home</span>
-                            <input type="checkbox" class="habit-checkbox" id="fitness-done" onchange="updateHabitStatus('fitness')">
-                        </div>
-                        <div class="habit-metric">
-                            <label>Duration (min)</label>
-                            <input type="number" step="1" id="fitness-min" placeholder="0">
-                        </div>
-                    </div>
-
-                    <!-- Mood -->
-                    <div class="habit-item">
-                        <div class="habit-header">
-                            <span class="habit-name">😊 Mood (1-10)</span>
-                        </div>
-                        <div class="habit-metric">
-                            <input type="number" min="1" max="10" id="mood" placeholder="7">
-                        </div>
-                    </div>
-
-                    <!-- Notes -->
-                    <div class="habit-item">
-                        <div class="habit-header">
-                            <span class="habit-name">📝 Notes</span>
-                        </div>
-                        <textarea class="habit-input" id="notes" rows="3" placeholder="How was your day?"></textarea>
+                    <div>
+                        <label style="font-weight: 600; font-size: 16px; margin-bottom: 8px; display: block;">📝 Notes</label>
+                        <textarea id="notes" rows="3" placeholder="Any thoughts about today?" style="width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; resize: vertical;"></textarea>
                     </div>
                 </div>
-
-                <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
             </div>
+
+            <button class="btn btn-primary" onclick="saveEntry()" style="margin-top: 20px;">💾 Save Entry</button>
 
             <!-- Complete History -->
             <div class="card">
@@ -1028,8 +1107,116 @@
         let selectedDateKey = null;
 
         function loadTrackerView() {
+            renderModernHabits();
             loadLogView();
             renderDetailedHistory();
+        }
+
+        function renderModernHabits() {
+            const container = document.getElementById('modernHabits');
+            container.innerHTML = '';
+
+            const dateKey = selectedDateKey || getTodayKey();
+            const dateData = data[dateKey] || {};
+
+            habits.forEach(habit => {
+                const habitData = dateData[habit.id] || {};
+                const isDone = habitData.done || false;
+                const value = habitData.value || '';
+
+                const card = document.createElement('div');
+                card.className = 'habit-card' + (isDone ? ' active' : '');
+                card.id = 'modern-habit-' + habit.id;
+
+                const metricInput = habit.hasMetric ? `
+                    <div class="metric-input-container ${isDone ? 'show' : ''}" id="metric-${habit.id}">
+                        <div class="metric-input-wrapper">
+                            <span class="metric-label">${habit.metricLabel === 'km' ? 'Distance' : 'Duration'}</span>
+                            <input
+                                type="number"
+                                step="${habit.metricLabel === 'km' ? '0.1' : '1'}"
+                                id="${habit.id}-${habit.metricLabel}"
+                                placeholder="0${habit.metricLabel === 'km' ? '.0' : ''}"
+                                value="${value}"
+                                onclick="event.stopPropagation()">
+                            <span class="metric-label">${habit.metricLabel}</span>
+                        </div>
+                    </div>
+                ` : '';
+
+                card.innerHTML = `
+                    <div class="habit-toggle-header" onclick="toggleModernHabit('${habit.id}')">
+                        <div class="habit-icon">${habit.emoji}</div>
+                        <div class="habit-info">
+                            <div class="habit-title">${habit.name}</div>
+                            <div class="habit-subtitle">${isDone ? (value ? `${value} ${habit.metricLabel}` : 'Completed ✓') : 'Tap to mark as done'}</div>
+                        </div>
+                        <div class="toggle-switch ${isDone ? 'active' : ''}" id="toggle-${habit.id}">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    ${metricInput}
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function toggleModernHabit(habitId) {
+            const card = document.getElementById('modern-habit-' + habitId);
+            const toggle = document.getElementById('toggle-' + habitId);
+            const metricContainer = document.getElementById('metric-' + habitId);
+
+            const isActive = toggle.classList.contains('active');
+
+            if (isActive) {
+                card.classList.remove('active');
+                toggle.classList.remove('active');
+                if (metricContainer) {
+                    metricContainer.classList.remove('show');
+                }
+            } else {
+                card.classList.add('active');
+                toggle.classList.add('active');
+                if (metricContainer) {
+                    metricContainer.classList.add('show');
+                    // Focus on input
+                    const input = metricContainer.querySelector('input');
+                    if (input) {
+                        setTimeout(() => input.focus(), 300);
+                    }
+                }
+            }
+
+            updateSubtitle(habitId);
+        }
+
+        function updateSubtitle(habitId) {
+            const habit = habits.find(h => h.id === habitId);
+            const card = document.getElementById('modern-habit-' + habitId);
+            const toggle = document.getElementById('toggle-' + habitId);
+            const isActive = toggle.classList.contains('active');
+
+            const subtitle = card.querySelector('.habit-subtitle');
+
+            if (isActive) {
+                if (habit.hasMetric) {
+                    const input = document.getElementById(habit.id + '-' + habit.metricLabel);
+                    const value = input ? input.value : '';
+                    subtitle.textContent = value ? `${value} ${habit.metricLabel}` : 'Completed ✓';
+
+                    // Update subtitle when input changes
+                    if (input) {
+                        input.oninput = () => {
+                            subtitle.textContent = input.value ? `${input.value} ${habit.metricLabel}` : 'Completed ✓';
+                        };
+                    }
+                } else {
+                    subtitle.textContent = 'Completed ✓';
+                }
+            } else {
+                subtitle.textContent = 'Tap to mark as done';
+            }
         }
 
         function loadLogView() {
@@ -1042,26 +1229,11 @@
             // Update review date display
             const date = new Date(dateKey);
             const isToday = dateKey === getTodayKey();
-            document.getElementById('reviewDate').textContent = isToday ? 'Today' : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const displayDate = isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('reviewDateDisplay').textContent = displayDate;
 
-            // Load checkbox states
-            habits.forEach(habit => {
-                const checkbox = document.getElementById(habit.id + '-done');
-                const habitData = dateData[habit.id] || {};
-
-                if (checkbox) {
-                    checkbox.checked = habitData.done || false;
-                    updateHabitStatus(habit.id);
-                }
-
-                // Load metric values
-                if (habit.hasMetric) {
-                    const input = document.getElementById(habit.id + '-' + habit.metricLabel);
-                    if (input) {
-                        input.value = habitData.value || '';
-                    }
-                }
-            });
+            // Render modern habits
+            renderModernHabits();
 
             // Load mood and notes
             document.getElementById('mood').value = dateData.mood || '';
@@ -1073,17 +1245,6 @@
             loadLogView();
         }
 
-        function updateHabitStatus(habitId) {
-            const checkbox = document.getElementById(habitId + '-done');
-            const habitItem = document.getElementById('habit-' + habitId);
-
-            if (checkbox.checked) {
-                habitItem.classList.add('completed');
-            } else {
-                habitItem.classList.remove('completed');
-            }
-        }
-
         async function saveEntry() {
             const dateKey = selectedDateKey || getTodayKey();
 
@@ -1091,10 +1252,10 @@
                 data[dateKey] = {};
             }
 
-            // Save habits
+            // Save habits from modern cards
             habits.forEach(habit => {
-                const checkbox = document.getElementById(habit.id + '-done');
-                const done = checkbox ? checkbox.checked : false;
+                const toggle = document.getElementById('toggle-' + habit.id);
+                const done = toggle ? toggle.classList.contains('active') : false;
 
                 data[dateKey][habit.id] = { done };
 
