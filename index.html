@@ -760,7 +760,7 @@
                         0%
                     </div>
                     <div style="font-size: 12px; color: var(--text-secondary);">
-                        Discipline Score (This Week)
+                        Discipline Score (Last 30 Days)
                     </div>
                 </div>
 
@@ -768,17 +768,24 @@
                 <div style="display: grid; gap: 12px;">
                     <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 14px;">💪 Physical Strength</span>
+                            <span style="font-size: 14px;">💪 Physical</span>
                             <span style="font-weight: 700; color: var(--success);" id="physicalScore">0%</span>
                         </div>
-                        <div style="font-size: 11px; color: var(--text-secondary);">Running + Ice Baths + Fitness</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Running + Fitness</div>
                     </div>
                     <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 14px;">🧠 Mental Clarity</span>
+                            <span style="font-size: 14px;">🧠 Mental</span>
                             <span style="font-weight: 700; color: var(--success);" id="mentalScore">0%</span>
                         </div>
-                        <div style="font-size: 11px; color: var(--text-secondary);">Meditation + English + Diary</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Ice Baths + Meditation + Diary</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 14px;">🗣️ Skills</span>
+                            <span style="font-weight: 700; color: var(--success);" id="skillsScore">0%</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">English Learning</div>
                     </div>
                     <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -786,13 +793,6 @@
                             <span style="font-weight: 700; color: var(--success);" id="disciplineStreak">0 days</span>
                         </div>
                         <div style="font-size: 11px; color: var(--text-secondary);">Days with 4+ habits completed</div>
-                    </div>
-                    <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 14px;">🧘 Inner Calm</span>
-                            <span style="font-weight: 700; color: var(--success);" id="calmScore">0%</span>
-                        </div>
-                        <div style="font-size: 11px; color: var(--text-secondary);">Meditation + Ice Baths consistency</div>
                     </div>
                 </div>
 
@@ -1403,13 +1403,14 @@
         }
 
         function updateMotivation() {
-            const weekData = getCurrentWeekData();
+            // Use last 30 days rolling (never resets)
+            const last30Days = getLastNDays(30);
 
-            // Calculate habit completion for the week
+            // Calculate habit completion for last 30 days
             let running = 0, icebaths = 0, meditation = 0, diary = 0, english = 0, fitness = 0;
             let totalCompleted = 0, totalExpected = 0;
 
-            weekData.forEach(day => {
+            last30Days.forEach(day => {
                 if (day.data.running?.done) running++;
                 if (day.data.icebaths?.done) icebaths++;
                 if (day.data.meditation?.done) meditation++;
@@ -1418,42 +1419,47 @@
                 if (day.data.fitness?.done) fitness++;
             });
 
-            habits.forEach(habit => {
-                totalExpected += habit.target;
-            });
+            // Expected in 30 days = (weekly target / 7) * 30 days
+            const runningTarget = habits.find(h => h.id === 'running').target;
+            const icebathTarget = habits.find(h => h.id === 'icebaths').target;
+            const meditationTarget = habits.find(h => h.id === 'meditation').target;
+            const diaryTarget = habits.find(h => h.id === 'diary').target;
+            const englishTarget = habits.find(h => h.id === 'english').target;
+            const fitnessTarget = habits.find(h => h.id === 'fitness').target;
+
+            const runningExpected = Math.round((runningTarget / 7) * 30);
+            const icebathExpected = Math.round((icebathTarget / 7) * 30);
+            const meditationExpected = Math.round((meditationTarget / 7) * 30);
+            const diaryExpected = Math.round((diaryTarget / 7) * 30);
+            const englishExpected = Math.round((englishTarget / 7) * 30);
+            const fitnessExpected = Math.round((fitnessTarget / 7) * 30);
+
+            totalExpected = runningExpected + icebathExpected + meditationExpected + diaryExpected + englishExpected + fitnessExpected;
             totalCompleted = running + icebaths + meditation + diary + english + fitness;
 
-            // Overall Discipline Score (based on weekly targets)
+            // Overall Discipline Score (last 30 days)
             const disciplineScore = totalExpected > 0 ? Math.round((totalCompleted / totalExpected) * 100) : 0;
             document.getElementById('disciplineScore').textContent = disciplineScore + '%';
 
-            // Physical Strength: Running + Ice Baths + Fitness
-            const runningTarget = habits.find(h => h.id === 'running').target;
-            const icebathTarget = habits.find(h => h.id === 'icebaths').target;
-            const fitnessTarget = habits.find(h => h.id === 'fitness').target;
-            const physicalExpected = runningTarget + icebathTarget + fitnessTarget;
-            const physicalCompleted = running + icebaths + fitness;
+            // Physical: Running + Fitness
+            const physicalExpected = runningExpected + fitnessExpected;
+            const physicalCompleted = running + fitness;
             const physicalScore = physicalExpected > 0 ? Math.round((physicalCompleted / physicalExpected) * 100) : 0;
             document.getElementById('physicalScore').textContent = physicalScore + '%';
 
-            // Mental Clarity: Meditation + English + Diary
-            const meditationTarget = habits.find(h => h.id === 'meditation').target;
-            const englishTarget = habits.find(h => h.id === 'english').target;
-            const diaryTarget = habits.find(h => h.id === 'diary').target;
-            const mentalExpected = meditationTarget + englishTarget + diaryTarget;
-            const mentalCompleted = meditation + english + diary;
+            // Mental: Ice Baths + Meditation + Diary
+            const mentalExpected = icebathExpected + meditationExpected + diaryExpected;
+            const mentalCompleted = icebaths + meditation + diary;
             const mentalScore = mentalExpected > 0 ? Math.round((mentalCompleted / mentalExpected) * 100) : 0;
             document.getElementById('mentalScore').textContent = mentalScore + '%';
+
+            // Skills: English
+            const skillsScore = englishExpected > 0 ? Math.round((english / englishExpected) * 100) : 0;
+            document.getElementById('skillsScore').textContent = skillsScore + '%';
 
             // Self-Discipline Streak (already calculated)
             const streak = calculateStreak();
             document.getElementById('disciplineStreak').textContent = streak + ' day' + (streak !== 1 ? 's' : '');
-
-            // Inner Calm: Meditation + Ice Baths
-            const calmExpected = meditationTarget + icebathTarget;
-            const calmCompleted = meditation + icebaths;
-            const calmScore = calmExpected > 0 ? Math.round((calmCompleted / calmExpected) * 100) : 0;
-            document.getElementById('calmScore').textContent = calmScore + '%';
 
             // Dynamic Motivational Message
             const messages = {
