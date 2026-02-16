@@ -747,24 +747,60 @@
                 </div>
             </div>
 
-            <!-- Week Progress -->
-            <div class="card">
+            <!-- Transformation Progress -->
+            <div class="card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1)); border: 2px solid var(--primary);">
                 <div class="card-header">
-                    <h2 class="card-title">📈 Week-over-Week</h2>
+                    <h2 class="card-title">🔥 Your Transformation</h2>
                 </div>
-                <div style="text-align: center; padding: 10px;">
-                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">
-                        This week (Mon-Sun) vs last week
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                        Building the person you want to become
                     </div>
-                    <div style="font-size: 32px; font-weight: 700; color: var(--success);" id="weekProgress">
-                        +0%
+                    <div style="font-size: 48px; font-weight: 700; color: var(--primary);" id="disciplineScore">
+                        0%
                     </div>
-                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;" id="weekProgressDetail">
-                        Formula: (This week % - Last week %) = Change
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        Discipline Score (This Week)
                     </div>
+                </div>
+
+                <!-- Transformation Areas -->
+                <div style="display: grid; gap: 12px;">
+                    <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 14px;">💪 Physical Strength</span>
+                            <span style="font-weight: 700; color: var(--success);" id="physicalScore">0%</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Running + Ice Baths + Fitness</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 14px;">🧠 Mental Clarity</span>
+                            <span style="font-weight: 700; color: var(--success);" id="mentalScore">0%</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Meditation + English + Diary</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 14px;">🎯 Self-Discipline</span>
+                            <span style="font-weight: 700; color: var(--success);" id="disciplineStreak">0 days</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Days with 4+ habits completed</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 12px; border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 14px;">🧘 Inner Calm</span>
+                            <span style="font-weight: 700; color: var(--success);" id="calmScore">0%</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Meditation + Ice Baths consistency</div>
+                    </div>
+                </div>
+
+                <!-- Motivational Message -->
+                <div id="motivationMessage" style="margin-top: 16px; padding: 16px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; text-align: center; font-size: 14px; line-height: 1.6; color: var(--text);">
+                    Every day you show up, you're becoming someone new.
                 </div>
             </div>
-
 
             <!-- This Week (Mon-Sun) -->
             <div class="card">
@@ -1367,21 +1403,94 @@
         }
 
         function updateMotivation() {
-            // Week-over-week progress
-            const lastWeekData = getPreviousWeekData();
-            const currentWeekData = getCurrentWeekData();
+            const weekData = getCurrentWeekData();
 
-            const lastWeekPercent = calculateWeekCompletion(lastWeekData);
-            const currentWeekPercent = calculateWeekCompletion(currentWeekData);
-            const weekProgress = currentWeekPercent - lastWeekPercent;
+            // Calculate habit completion for the week
+            let running = 0, icebaths = 0, meditation = 0, diary = 0, english = 0, fitness = 0;
+            let totalCompleted = 0, totalExpected = 0;
 
-            const weekProgressEl = document.getElementById('weekProgress');
-            weekProgressEl.textContent = (weekProgress >= 0 ? '+' : '') + weekProgress + '%';
-            weekProgressEl.style.color = weekProgress >= 0 ? 'var(--success)' : 'var(--danger)';
+            weekData.forEach(day => {
+                if (day.data.running?.done) running++;
+                if (day.data.icebaths?.done) icebaths++;
+                if (day.data.meditation?.done) meditation++;
+                if (day.data.diary?.done) diary++;
+                if (day.data.english?.done) english++;
+                if (day.data.fitness?.done) fitness++;
+            });
 
-            // Update formula detail
-            const detailEl = document.getElementById('weekProgressDetail');
-            detailEl.textContent = `${currentWeekPercent}% (this week) - ${lastWeekPercent}% (last week) = ${weekProgress >= 0 ? '+' : ''}${weekProgress}%`;
+            habits.forEach(habit => {
+                totalExpected += habit.target;
+            });
+            totalCompleted = running + icebaths + meditation + diary + english + fitness;
+
+            // Overall Discipline Score (based on weekly targets)
+            const disciplineScore = totalExpected > 0 ? Math.round((totalCompleted / totalExpected) * 100) : 0;
+            document.getElementById('disciplineScore').textContent = disciplineScore + '%';
+
+            // Physical Strength: Running + Ice Baths + Fitness
+            const runningTarget = habits.find(h => h.id === 'running').target;
+            const icebathTarget = habits.find(h => h.id === 'icebaths').target;
+            const fitnessTarget = habits.find(h => h.id === 'fitness').target;
+            const physicalExpected = runningTarget + icebathTarget + fitnessTarget;
+            const physicalCompleted = running + icebaths + fitness;
+            const physicalScore = physicalExpected > 0 ? Math.round((physicalCompleted / physicalExpected) * 100) : 0;
+            document.getElementById('physicalScore').textContent = physicalScore + '%';
+
+            // Mental Clarity: Meditation + English + Diary
+            const meditationTarget = habits.find(h => h.id === 'meditation').target;
+            const englishTarget = habits.find(h => h.id === 'english').target;
+            const diaryTarget = habits.find(h => h.id === 'diary').target;
+            const mentalExpected = meditationTarget + englishTarget + diaryTarget;
+            const mentalCompleted = meditation + english + diary;
+            const mentalScore = mentalExpected > 0 ? Math.round((mentalCompleted / mentalExpected) * 100) : 0;
+            document.getElementById('mentalScore').textContent = mentalScore + '%';
+
+            // Self-Discipline Streak (already calculated)
+            const streak = calculateStreak();
+            document.getElementById('disciplineStreak').textContent = streak + ' day' + (streak !== 1 ? 's' : '');
+
+            // Inner Calm: Meditation + Ice Baths
+            const calmExpected = meditationTarget + icebathTarget;
+            const calmCompleted = meditation + icebaths;
+            const calmScore = calmExpected > 0 ? Math.round((calmCompleted / calmExpected) * 100) : 0;
+            document.getElementById('calmScore').textContent = calmScore + '%';
+
+            // Dynamic Motivational Message
+            const messages = {
+                excellent: [
+                    "You're not just doing habits. You're proving to yourself who you really are.",
+                    "Discipline is building your future self. Every day, you're becoming stronger.",
+                    "This consistency isn't luck - it's you choosing transformation every single day.",
+                    "You're building an identity of someone who keeps their word to themselves."
+                ],
+                good: [
+                    "You're showing up. That's what separates dreamers from achievers.",
+                    "Each habit completed is a vote for the person you're becoming.",
+                    "The discipline you're building now will compound into everything you do.",
+                    "You're not perfect, but you're consistent. That's what matters most."
+                ],
+                moderate: [
+                    "Transformation isn't linear. Every day you try is a day you're growing.",
+                    "The gap between who you are and who you want to be closes with each habit.",
+                    "You started this journey for a reason. That reason is still valid.",
+                    "Self-discipline isn't built in perfect weeks - it's built by showing up after setbacks."
+                ],
+                low: [
+                    "This week is just one chapter. Your transformation story is far from over.",
+                    "The person you want to become is built in weeks like this - when you choose to continue.",
+                    "You're learning what it takes. This data is valuable. Use it to adapt.",
+                    "Discipline isn't about never falling - it's about always getting back up."
+                ]
+            };
+
+            let messageCategory;
+            if (disciplineScore >= 80) messageCategory = 'excellent';
+            else if (disciplineScore >= 60) messageCategory = 'good';
+            else if (disciplineScore >= 40) messageCategory = 'moderate';
+            else messageCategory = 'low';
+
+            const randomMessage = messages[messageCategory][Math.floor(Math.random() * messages[messageCategory].length)];
+            document.getElementById('motivationMessage').textContent = randomMessage;
         }
 
         function getWeekData(weeksAgo) {
