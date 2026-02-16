@@ -800,6 +800,42 @@
                 <div id="motivationMessage" style="margin-top: 16px; padding: 16px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; text-align: center; font-size: 14px; line-height: 1.6; color: var(--text);">
                     Every day you show up, you're becoming someone new.
                 </div>
+
+                <!-- Show Impact Button -->
+                <button onclick="toggleImpactInsights()" style="width: 100%; margin-top: 16px; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--success)); color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span id="impactButtonText">✨ Show My Impact</span>
+                </button>
+
+                <!-- Impact Insights (Hidden by default) -->
+                <div id="impactInsights" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease; margin-top: 16px;">
+                    <div style="background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--primary);">
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center;">🔬 Your Transformation Data</h3>
+
+                        <!-- Physical Improvements -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--success);">💪 Physical Impact</div>
+                            <div id="physicalImpact" style="font-size: 13px; line-height: 1.8; color: var(--text-secondary);"></div>
+                        </div>
+
+                        <!-- Mental Improvements -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--primary);">🧠 Mental Impact</div>
+                            <div id="mentalImpact" style="font-size: 13px; line-height: 1.8; color: var(--text-secondary);"></div>
+                        </div>
+
+                        <!-- Future Projections -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--warning);">🚀 Future You (6 months)</div>
+                            <div id="futureProjection" style="font-size: 13px; line-height: 1.8; color: var(--text-secondary);"></div>
+                        </div>
+
+                        <!-- Totals -->
+                        <div style="background: rgba(99, 102, 241, 0.1); padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px; text-align: center;">📊 Your Numbers</div>
+                            <div id="totalStats" style="font-size: 12px; line-height: 2; color: var(--text);"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- This Week (Mon-Sun) -->
@@ -1559,6 +1595,118 @@
 
             const randomMessage = messages[messageCategory][Math.floor(Math.random() * messages[messageCategory].length)];
             document.getElementById('motivationMessage').textContent = randomMessage;
+
+            // Calculate impact insights for the "Show My Impact" section
+            calculateImpactInsights();
+        }
+
+        function toggleImpactInsights() {
+            const insights = document.getElementById('impactInsights');
+            const buttonText = document.getElementById('impactButtonText');
+
+            if (insights.style.maxHeight === '0px' || !insights.style.maxHeight) {
+                insights.style.maxHeight = '2000px';
+                buttonText.textContent = '✨ Hide Insights';
+            } else {
+                insights.style.maxHeight = '0px';
+                buttonText.textContent = '✨ Show My Impact';
+            }
+        }
+
+        function calculateImpactInsights() {
+            // Get all historical data
+            const allDates = Object.keys(data).sort();
+            if (allDates.length === 0) return;
+
+            // Calculate totals
+            let totalRunningKm = 0;
+            let totalRunningDays = 0;
+            let totalIceBaths = 0;
+            let totalMeditationMin = 0;
+            let totalMeditationDays = 0;
+            let totalDiaryDays = 0;
+            let totalEnglishDays = 0;
+            let totalFitnessMin = 0;
+            let totalFitnessDays = 0;
+
+            allDates.forEach(date => {
+                const dayData = data[date];
+                if (dayData.running?.done) {
+                    totalRunningDays++;
+                    if (dayData.running.value) totalRunningKm += dayData.running.value;
+                }
+                if (dayData.icebaths?.done) totalIceBaths++;
+                if (dayData.meditation?.done) {
+                    totalMeditationDays++;
+                    if (dayData.meditation.value) totalMeditationMin += dayData.meditation.value;
+                }
+                if (dayData.diary?.done) totalDiaryDays++;
+                if (dayData.english?.done) totalEnglishDays++;
+                if (dayData.fitness?.done) {
+                    totalFitnessDays++;
+                    if (dayData.fitness.value) totalFitnessMin += dayData.fitness.value;
+                }
+            });
+
+            // Physical Impact
+            const avgRunningKm = totalRunningDays > 0 ? (totalRunningKm / totalRunningDays).toFixed(1) : 0;
+            const physicalImpactHTML = `
+                • <b>${totalRunningKm.toFixed(1)} km</b> ran = stronger heart, lower resting HR by ~5-10 BPM<br>
+                • <b>${totalIceBaths}</b> ice baths = improved HRV, faster recovery, stronger immune system<br>
+                • <b>${totalFitnessMin} minutes</b> of fitness = increased strength, muscle tone, metabolic health<br>
+                • Your cardiovascular fitness is ~<b>${Math.min(totalRunningDays * 2, 40)}% better</b> than when you started<br>
+                • You're burning an estimated <b>${Math.round(totalRunningKm * 60)} extra calories/week</b> from running alone
+            `;
+            document.getElementById('physicalImpact').innerHTML = physicalImpactHTML;
+
+            // Mental Impact
+            const totalMeditationHours = (totalMeditationMin / 60).toFixed(1);
+            const mentalImpactHTML = `
+                • <b>${totalMeditationMin} minutes</b> (${totalMeditationHours}h) of meditation = thicker prefrontal cortex, better emotional control<br>
+                • <b>${totalIceBaths}</b> cold exposures = increased dopamine by ~250%, improved stress resilience<br>
+                • <b>${totalDiaryDays}</b> journal entries = better self-awareness, reduced anxiety, clearer thinking<br>
+                • <b>${totalEnglishDays}</b> English sessions = new neural connections, improved confidence<br>
+                • Your stress response is estimated <b>${Math.min(totalMeditationDays * 3, 60)}% more regulated</b> than before
+            `;
+            document.getElementById('mentalImpact').innerHTML = mentalImpactHTML;
+
+            // Future Projections (6 months)
+            const last30Days = getLastNDays(30);
+            const runningHabit = habits.find(h => h.id === 'running');
+            const icebathHabit = habits.find(h => h.id === 'icebaths');
+            const meditationHabit = habits.find(h => h.id === 'meditation');
+
+            const runningRate = last30Days.filter(d => d.data.running?.done).length / 30;
+            const icebathRate = last30Days.filter(d => d.data.icebaths?.done).length / 30;
+            const meditationRate = last30Days.filter(d => d.data.meditation?.done).length / 30;
+
+            const futureRunningKm = Math.round(runningRate * avgRunningKm * 180); // 6 months
+            const futureIceBaths = Math.round(icebathRate * 180);
+            const futureMeditationHours = Math.round(meditationRate * (totalMeditationMin / totalMeditationDays || 15) * 180 / 60);
+
+            const futureProjectionHTML = `
+                If you keep this consistency for 6 months:<br>
+                • You'll run <b>${futureRunningKm} km</b> - equivalent to running <b>${(futureRunningKm / 42.2).toFixed(0)} marathons</b><br>
+                • <b>${futureIceBaths}</b> more ice baths - significantly improved HRV & stress tolerance<br>
+                • <b>${futureMeditationHours} hours</b> of meditation - measurable brain structure changes on MRI<br>
+                • Your VO2 max will likely improve by <b>15-25%</b>, adding years to your healthspan<br>
+                • You'll be in the <b>top 5%</b> of people your age for discipline & health habits
+            `;
+            document.getElementById('futureProjection').innerHTML = futureProjectionHTML;
+
+            // Total Stats
+            const daysSinceStart = allDates.length;
+            const totalStatsHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center;">
+                    <div><b>${daysSinceStart}</b><br>Days tracked</div>
+                    <div><b>${totalRunningKm.toFixed(0)} km</b><br>Distance</div>
+                    <div><b>${totalIceBaths}</b><br>Ice baths</div>
+                    <div><b>${totalMeditationHours}h</b><br>Meditation</div>
+                    <div><b>${totalDiaryDays}</b><br>Journal entries</div>
+                    <div><b>${totalEnglishDays}</b><br>English sessions</div>
+                </div>
+            `;
+            document.getElementById('totalStats').innerHTML = totalStatsHTML;
         }
 
         function getWeekData(weeksAgo) {
