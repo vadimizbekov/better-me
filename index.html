@@ -349,6 +349,30 @@
             text-align: center;
         }
 
+        /* Month Buttons */
+        .btn-month {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-month:hover {
+            border-color: var(--primary);
+        }
+
+        .btn-month.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
         .habit-input {
             width: 100%;
             padding: 10px;
@@ -726,70 +750,44 @@
             <!-- Week Progress -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">📈 Week Comparison</h2>
+                    <h2 class="card-title">📈 Week-over-Week</h2>
                 </div>
                 <div style="text-align: center; padding: 10px;">
-                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
-                        This week vs. last week
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">
+                        This week (Mon-Sun) vs last week
                     </div>
                     <div style="font-size: 32px; font-weight: 700; color: var(--success);" id="weekProgress">
                         +0%
                     </div>
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
-                        Positive = you're improving! 💪
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;" id="weekProgressDetail">
+                        Formula: (This week % - Last week %) = Change
                     </div>
                 </div>
             </div>
 
-            <!-- Motivation -->
-            <div class="motivation">
-                <h3>🎯 Long-Term Health Predictions</h3>
-                <div style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-bottom: 16px;">
-                    If you keep your current consistency, here's the expected improvement:
-                </div>
-                <div class="impact-item">
-                    <span class="impact-label">HRV Improvement (6 months)</span>
-                    <span class="impact-value" id="hrvImpact6mo">+0%</span>
-                </div>
-                <div class="impact-item">
-                    <span class="impact-label">Stress Reduction (3 months)</span>
-                    <span class="impact-value" id="stressImpact3mo">-0%</span>
-                </div>
-                <div class="impact-item">
-                    <span class="impact-label">Mental Clarity (1 month)</span>
-                    <span class="impact-value" id="clarityImpact1mo">+0%</span>
-                </div>
-                <div class="impact-item">
-                    <span class="impact-label">English Fluency (6 months)</span>
-                    <span class="impact-value" id="englishImpact6mo">+0%</span>
-                </div>
-            </div>
 
-            <!-- Today's Habits -->
+            <!-- This Week (Mon-Sun) -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">📋 Today's Habits</h2>
-                </div>
-                <div class="habit-list" id="todayHabits">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Weekly Overview -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">📅 Weekly Overview</h2>
+                    <h2 class="card-title">📅 This Week</h2>
+                    <span id="weekRange" style="font-size: 12px; color: var(--text-secondary);"></span>
                 </div>
                 <div id="weeklyOverview">
                     <!-- Populated by JS -->
                 </div>
             </div>
 
-            <!-- Monthly Overview -->
+            <!-- Monthly Tabs -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">📆 Monthly Overview</h2>
                 </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <button class="btn-month active" onclick="switchMonth(0)">This Month</button>
+                    <button class="btn-month" onclick="switchMonth(-1)">Last Month</button>
+                    <button class="btn-month" onclick="switchMonth(-2)">2 Months Ago</button>
+                </div>
+                <div id="monthTitle" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;"></div>
                 <div id="monthlyOverview">
                     <!-- Populated by JS -->
                 </div>
@@ -1073,38 +1071,14 @@
         }
 
         function loadOverviewView() {
-            const todayKey = getTodayKey();
-            const todayData = data[todayKey] || {};
-
-            const container = document.getElementById('todayHabits');
-            container.innerHTML = '';
-
-            habits.forEach(habit => {
-                const done = todayData[habit.id]?.done || false;
-                const metricValue = todayData[habit.id]?.value || 0;
-
-                const habitEl = document.createElement('div');
-                habitEl.className = 'habit-item' + (done ? ' completed' : '');
-                habitEl.innerHTML = `
-                    <div class="habit-header">
-                        <span class="habit-name">${habit.emoji} ${habit.name}</span>
-                        <span style="font-size: 20px;">${done ? '✅' : '⭕'}</span>
-                    </div>
-                    ${habit.hasMetric && metricValue ? `<div style="font-size: 14px; color: var(--text-secondary);">${metricValue} ${habit.metricLabel}</div>` : ''}
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${done ? '100' : '0'}%"></div>
-                    </div>
-                `;
-                container.appendChild(habitEl);
-            });
-
             updateStats();
             updateMotivation();
             renderWeeklyOverview();
-            renderMonthlyOverview();
+            renderMonthlyOverview(selectedMonthOffset);
         }
 
         let selectedDateKey = null;
+        let selectedMonthOffset = 0; // 0 = this month, -1 = last month, etc.
 
         function loadTrackerView() {
             renderModernHabits();
@@ -1301,8 +1275,8 @@
             const todayPercent = Math.round((todayCompleted / habits.length) * 100);
             document.getElementById('todayCompletion').textContent = todayPercent + '%';
 
-            // Week completion (based on targets)
-            const weekData = getLastNDays(7);
+            // Week completion (Monday-Sunday based on targets)
+            const weekData = getCurrentWeekData();
             let weekExpected = 0;
             let weekCompleted = 0;
 
@@ -1320,14 +1294,15 @@
             const streak = calculateStreak();
             document.getElementById('weekStreak').textContent = streak;
 
-            // Month completion (approximate based on targets)
-            const monthData = getLastNDays(30);
+            // Month completion (calendar month based on targets)
+            const monthInfo = getMonthData(0); // Current month
+            const monthData = monthInfo.data;
             let monthExpected = 0;
             let monthCompleted = 0;
 
             habits.forEach(habit => {
-                // Approximate 4.3 weeks in a month
-                monthExpected += Math.round(habit.target * 4.3);
+                const weeksInMonth = Math.floor(monthInfo.daysInMonth / 7);
+                monthExpected += habit.target * weeksInMonth;
                 monthData.forEach(day => {
                     if (day.data[habit.id]?.done) monthCompleted++;
                 });
@@ -1338,10 +1313,10 @@
         }
 
         function updateMotivation() {
-            // Calculate current week consistency
-            const weekData = getLastNDays(7);
-            const lastWeekData = getWeekData(-1); // Previous week
-            const currentWeekData = getWeekData(0); // This week
+            // Calculate current week consistency (Monday-Sunday)
+            const weekData = getCurrentWeekData();
+            const lastWeekData = getPreviousWeekData();
+            const currentWeekData = getCurrentWeekData();
 
             let iceBathCount = 0;
             let meditationCount = 0;
@@ -1392,6 +1367,10 @@
             const weekProgressEl = document.getElementById('weekProgress');
             weekProgressEl.textContent = (weekProgress >= 0 ? '+' : '') + weekProgress + '%';
             weekProgressEl.style.color = weekProgress >= 0 ? 'var(--success)' : 'var(--danger)';
+
+            // Update formula detail
+            const detailEl = document.getElementById('weekProgressDetail');
+            detailEl.textContent = `${currentWeekPercent}% (this week) - ${lastWeekPercent}% (last week) = ${weekProgress >= 0 ? '+' : ''}${weekProgress}%`;
         }
 
         function getWeekData(weeksAgo) {
@@ -1505,8 +1484,16 @@
             const container = document.getElementById('weeklyOverview');
             container.innerHTML = '';
 
+            // Get current week (Monday-Sunday)
+            const weekData = getCurrentWeekData();
+
+            // Update week range display
+            const firstDay = new Date(weekData[0].date);
+            const lastDay = new Date(weekData[6].date);
+            const rangeText = `${firstDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${lastDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+            document.getElementById('weekRange').textContent = rangeText;
+
             habits.forEach(habit => {
-                const weekData = getLastNDays(7);
                 let completed = 0;
 
                 weekData.forEach(day => {
@@ -1532,12 +1519,17 @@
             });
         }
 
-        function renderMonthlyOverview() {
+        function renderMonthlyOverview(monthOffset = 0) {
             const container = document.getElementById('monthlyOverview');
             container.innerHTML = '';
 
+            const monthInfo = getMonthData(monthOffset);
+            const monthData = monthInfo.data;
+
+            // Update month title
+            document.getElementById('monthTitle').textContent = `${monthInfo.monthName} (${monthInfo.daysInMonth} days)`;
+
             habits.forEach(habit => {
-                const monthData = getLastNDays(30);
                 let completed = 0;
                 let totalMetric = 0;
 
@@ -1550,9 +1542,10 @@
                     }
                 });
 
-                // Calculate monthly target based on weekly target * 4.3 weeks per month
-                const monthlyTarget = Math.round(habit.target * 4.3);
-                const percent = Math.min(Math.round((completed / monthlyTarget) * 100), 100);
+                // Calculate monthly target: weekly target * number of full weeks in this month
+                const weeksInMonth = Math.floor(monthInfo.daysInMonth / 7);
+                const monthlyTarget = habit.target * weeksInMonth;
+                const percent = monthlyTarget > 0 ? Math.min(Math.round((completed / monthlyTarget) * 100), 100) : 0;
                 const displayCompleted = Math.min(completed, monthlyTarget);
 
                 const habitEl = document.createElement('div');
