@@ -543,8 +543,7 @@
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab active" onclick="switchView('overview')">Overview</button>
-            <button class="tab" onclick="switchView('log')">Log Entry</button>
-            <button class="tab" onclick="switchView('progress')">Progress</button>
+            <button class="tab" onclick="switchView('tracker')">Tracker</button>
             <button class="tab" onclick="switchView('settings')">Settings</button>
         </div>
 
@@ -643,8 +642,8 @@
             </div>
         </div>
 
-        <!-- LOG ENTRY VIEW -->
-        <div id="logView" class="view">
+        <!-- TRACKER VIEW (Combined Log + History) -->
+        <div id="trackerView" class="view">
             <!-- Date Picker -->
             <div class="card" style="margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -750,18 +749,16 @@
 
                 <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
             </div>
-        </div>
 
-        <!-- PROGRESS VIEW (Detailed History) -->
-        <div id="progressView" class="view">
+            <!-- Complete History -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">📊 Your Complete History</h2>
                 </div>
                 <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
-                    All your daily habit tracking data
+                    All your daily habit tracking data - click Edit to modify any day
                 </div>
-                <div id="detailedHistory" style="max-height: 70vh; overflow-y: auto;">
+                <div id="detailedHistory" style="max-height: 60vh; overflow-y: auto;">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -838,7 +835,6 @@
                     loadSettingsIntoHabits();
                     updateCurrentDate();
                     loadOverviewView();
-                    loadLogView();
                     updateStats();
                     updateMotivation();
                     renderWeekCalendar();
@@ -990,11 +986,10 @@
 
             // Refresh data
             if (view === 'overview') loadOverviewView();
-            if (view === 'log') {
-                selectedDateKey = null; // Reset to today when switching to log view
-                loadLogView();
+            if (view === 'tracker') {
+                selectedDateKey = null; // Reset to today when switching to tracker view
+                loadTrackerView();
             }
-            if (view === 'progress') loadProgressView();
             if (view === 'settings') loadSettingsView();
         }
 
@@ -1031,6 +1026,11 @@
         }
 
         let selectedDateKey = null;
+
+        function loadTrackerView() {
+            loadLogView();
+            renderDetailedHistory();
+        }
 
         function loadLogView() {
             const dateKey = selectedDateKey || getTodayKey();
@@ -1125,6 +1125,7 @@
             updateStats();
             updateMotivation();
             renderWeekCalendar();
+            renderDetailedHistory();
         }
 
         function updateStats() {
@@ -1333,13 +1334,10 @@
                 dayCard.onclick = () => {
                     selectedDateKey = day.date;
                     loadLogView();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 };
                 container.appendChild(dayCard);
             });
-        }
-
-        function loadProgressView() {
-            renderDetailedHistory();
         }
 
         function renderWeeklyOverview() {
@@ -1477,14 +1475,10 @@
         }
 
         function editDay(date) {
-            // Switch to Log Entry tab
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelector('.tab[onclick*="log"]').classList.add('active');
+            // Scroll to top of tracker view
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById('logView').classList.add('active');
-
-            // Load the selected date
+            // Load the selected date in the form
             selectedDateKey = date;
             loadLogView();
         }
@@ -1527,7 +1521,8 @@
             // Refresh all views with new targets
             updateStats();
             updateMotivation();
-            loadProgressView();
+            renderWeeklyOverview();
+            renderMonthlyOverview();
         }
 
     </script>
