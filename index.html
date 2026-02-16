@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Better Me</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            background: var(--bg-card);
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* View Sections */
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Habit List */
+        .habit-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .habit-item {
+            background: var(--bg);
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+        }
+
+        .habit-item.completed {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .habit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .habit-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .habit-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .habit-input {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .habit-metric {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .habit-metric input {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .habit-metric label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-width: 60px;
+        }
+
+        /* Motivation Section */
+        .motivation {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(16, 185, 129, 0.2));
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid var(--primary);
+        }
+
+        .motivation h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .impact-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .impact-item:last-child {
+            border-bottom: none;
+        }
+
+        .impact-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .impact-value {
+            font-weight: 700;
+            color: var(--success);
+            font-size: 16px;
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transition: width 0.3s;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: var(--primary-dark);
+            transform: scale(0.98);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        /* Weekly Calendar */
+        .week-calendar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .day-card {
+            flex: 1;
+            min-width: 60px;
+            padding: 12px 8px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .day-card.today {
+            border-color: var(--primary);
+        }
+
+        .day-card.completed {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .day-name {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .day-date {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .day-completion {
+            font-size: 10px;
+            color: var(--success);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Better Me</h1>
+            <p id="currentDate">Loading...</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchView('today')">Today</button>
+            <button class="tab" onclick="switchView('log')">Log Entry</button>
+            <button class="tab" onclick="switchView('progress')">Progress</button>
+            <button class="tab" onclick="switchView('settings')">Settings</button>
+        </div>
+
+        <!-- TODAY VIEW -->
+        <div id="todayView" class="view active">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="todayCompletion">0%</div>
+                    <div class="stat-label">Today's Progress</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-value" id="weekStreak">0</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-value" id="weekCompletion">0%</div>
+                    <div class="stat-label">This Week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="monthCompletion">0%</div>
+                    <div class="stat-label">This Month</div>
+                </div>
+            </div>
+
+            <!-- Week Progress -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📈 Last Week Progress</h2>
+                </div>
+                <div style="text-align: center; padding: 10px;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                        Week-over-week improvement
+                    </div>
+                    <div style="font-size: 32px; font-weight: 700; color: var(--success);" id="weekProgress">
+                        +0%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motivation -->
+            <div class="motivation">
+                <h3>🎯 Long-Term Health Impact</h3>
+                <div style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-bottom: 16px;">
+                    Based on your current consistency
+                </div>
+                <div class="impact-item">
+                    <span class="impact-label">HRV Improvement (6 months)</span>
+                    <span class="impact-value" id="hrvImpact6mo">+0%</span>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-label">Stress Reduction (3 months)</span>
+                    <span class="impact-value" id="stressImpact3mo">-0%</span>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-label">Mental Clarity (1 month)</span>
+                    <span class="impact-value" id="clarityImpact1mo">+0%</span>
+                </div>
+                <div class="impact-item">
+                    <span class="impact-label">English Fluency (6 months)</span>
+                    <span class="impact-value" id="englishImpact6mo">+0%</span>
+                </div>
+            </div>
+
+            <!-- Today's Habits -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Today's Habits</h2>
+                </div>
+                <div class="habit-list" id="todayHabits">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- LOG ENTRY VIEW -->
+        <div id="logView" class="view">
+            <!-- Week Calendar -->
+            <div class="week-calendar" id="weekCalendar">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Evening Review</h2>
+                    <span id="reviewDate">Today</span>
+                </div>
+                <div class="habit-list">
+                    <!-- Running -->
+                    <div class="habit-item" id="habit-running">
+                        <div class="habit-header">
+                            <span class="habit-name">🏃 Running</span>
+                            <input type="checkbox" class="habit-checkbox" id="running-done" onchange="updateHabitStatus('running')">
+                        </div>
+                        <div class="habit-metric">
+                            <label>Distance (km)</label>
+                            <input type="number" step="0.1" id="running-km" placeholder="0.0">
+                        </div>
+                    </div>
+
+                    <!-- Ice Baths -->
+                    <div class="habit-item" id="habit-icebaths">
+                        <div class="habit-header">
+                            <span class="habit-name">🧊 Ice Baths</span>
+                            <input type="checkbox" class="habit-checkbox" id="icebaths-done" onchange="updateHabitStatus('icebaths')">
+                        </div>
+                    </div>
+
+                    <!-- Meditation -->
+                    <div class="habit-item" id="habit-meditation">
+                        <div class="habit-header">
+                            <span class="habit-name">🧘 Meditation</span>
+                            <input type="checkbox" class="habit-checkbox" id="meditation-done" onchange="updateHabitStatus('meditation')">
+                        </div>
+                        <div class="habit-metric">
+                            <label>Duration (min)</label>
+                            <input type="number" step="1" id="meditation-min" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- Diary -->
+                    <div class="habit-item" id="habit-diary">
+                        <div class="habit-header">
+                            <span class="habit-name">📔 Diary</span>
+                            <input type="checkbox" class="habit-checkbox" id="diary-done" onchange="updateHabitStatus('diary')">
+                        </div>
+                    </div>
+
+                    <!-- English Lessons -->
+                    <div class="habit-item" id="habit-english">
+                        <div class="habit-header">
+                            <span class="habit-name">🗣️ English Lessons</span>
+                            <input type="checkbox" class="habit-checkbox" id="english-done" onchange="updateHabitStatus('english')">
+                        </div>
+                    </div>
+
+                    <!-- Fitness at Home -->
+                    <div class="habit-item" id="habit-fitness">
+                        <div class="habit-header">
+                            <span class="habit-name">💪 Fitness at Home</span>
+                            <input type="checkbox" class="habit-checkbox" id="fitness-done" onchange="updateHabitStatus('fitness')">
+                        </div>
+                        <div class="habit-metric">
+                            <label>Duration (min)</label>
+                            <input type="number" step="1" id="fitness-min" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- Mood -->
+                    <div class="habit-item">
+                        <div class="habit-header">
+                            <span class="habit-name">😊 Mood (1-10)</span>
+                        </div>
+                        <div class="habit-metric">
+                            <input type="number" min="1" max="10" id="mood" placeholder="7">
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="habit-item">
+                        <div class="habit-header">
+                            <span class="habit-name">📝 Notes</span>
+                        </div>
+                        <textarea class="habit-input" id="notes" rows="3" placeholder="How was your day?"></textarea>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
+            </div>
+        </div>
+
+        <!-- PROGRESS VIEW -->
+        <div id="progressView" class="view">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Weekly Progress</h2>
+                </div>
+                <div id="weeklyProgress">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Monthly Overview</h2>
+                </div>
+                <div id="monthlyProgress">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS VIEW -->
+        <div id="settingsView" class="view">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">⚙️ Weekly Targets</h2>
+                </div>
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                    Set how many times per week you want to do each habit
+                </div>
+                <div class="habit-list" id="settingsHabits">
+                    <!-- Populated by JS -->
+                </div>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure with default targets
+        let habits = [
+            { id: 'running', name: 'Running', emoji: '🏃', hasMetric: true, metricLabel: 'km', target: 4 },
+            { id: 'icebaths', name: 'Ice Baths', emoji: '🧊', hasMetric: false, target: 7 },
+            { id: 'meditation', name: 'Meditation', emoji: '🧘', hasMetric: true, metricLabel: 'min', target: 7 },
+            { id: 'diary', name: 'Diary', emoji: '📔', hasMetric: false, target: 7 },
+            { id: 'english', name: 'English', emoji: '🗣️', hasMetric: false, target: 3 },
+            { id: 'fitness', name: 'Fitness', emoji: '💪', hasMetric: true, metricLabel: 'min', target: 3 }
+        ];
+
+        let data = loadData();
+        let settings = loadSettings();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettingsIntoHabits();
+            updateCurrentDate();
+            loadTodayView();
+            loadLogView();
+            updateStats();
+            updateMotivation();
+            renderWeekCalendar();
+        });
+
+        function loadData() {
+            const saved = localStorage.getItem('betterMeData');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        function saveData() {
+            localStorage.setItem('betterMeData', JSON.stringify(data));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('betterMeSettings');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        function saveSettingsData() {
+            localStorage.setItem('betterMeSettings', JSON.stringify(settings));
+        }
+
+        function loadSettingsIntoHabits() {
+            // Update habit targets from saved settings
+            habits.forEach(habit => {
+                if (settings[habit.id] !== undefined) {
+                    habit.target = settings[habit.id];
+                }
+            });
+        }
+
+        function updateCurrentDate() {
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        function getTodayKey() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
+        function switchView(view) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update views
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(view + 'View').classList.add('active');
+
+            // Refresh data
+            if (view === 'today') loadTodayView();
+            if (view === 'log') loadLogView();
+            if (view === 'progress') loadProgressView();
+            if (view === 'settings') loadSettingsView();
+        }
+
+        function loadTodayView() {
+            const todayKey = getTodayKey();
+            const todayData = data[todayKey] || {};
+
+            const container = document.getElementById('todayHabits');
+            container.innerHTML = '';
+
+            habits.forEach(habit => {
+                const done = todayData[habit.id]?.done || false;
+                const metricValue = todayData[habit.id]?.value || 0;
+
+                const habitEl = document.createElement('div');
+                habitEl.className = 'habit-item' + (done ? ' completed' : '');
+                habitEl.innerHTML = `
+                    <div class="habit-header">
+                        <span class="habit-name">${habit.emoji} ${habit.name}</span>
+                        <span style="font-size: 20px;">${done ? '✅' : '⭕'}</span>
+                    </div>
+                    ${habit.hasMetric && metricValue ? `<div style="font-size: 14px; color: var(--text-secondary);">${metricValue} ${habit.metricLabel}</div>` : ''}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${done ? '100' : '0'}%"></div>
+                    </div>
+                `;
+                container.appendChild(habitEl);
+            });
+
+            updateStats();
+            updateMotivation();
+        }
+
+        function loadLogView() {
+            const todayKey = getTodayKey();
+            const todayData = data[todayKey] || {};
+
+            // Load checkbox states
+            habits.forEach(habit => {
+                const checkbox = document.getElementById(habit.id + '-done');
+                const habitData = todayData[habit.id] || {};
+
+                if (checkbox) {
+                    checkbox.checked = habitData.done || false;
+                    updateHabitStatus(habit.id);
+                }
+
+                // Load metric values
+                if (habit.hasMetric) {
+                    const input = document.getElementById(habit.id + '-' + habit.metricLabel);
+                    if (input && habitData.value) {
+                        input.value = habitData.value;
+                    }
+                }
+            });
+
+            // Load mood and notes
+            if (todayData.mood) document.getElementById('mood').value = todayData.mood;
+            if (todayData.notes) document.getElementById('notes').value = todayData.notes;
+        }
+
+        function updateHabitStatus(habitId) {
+            const checkbox = document.getElementById(habitId + '-done');
+            const habitItem = document.getElementById('habit-' + habitId);
+
+            if (checkbox.checked) {
+                habitItem.classList.add('completed');
+            } else {
+                habitItem.classList.remove('completed');
+            }
+        }
+
+        function saveEntry() {
+            const todayKey = getTodayKey();
+
+            if (!data[todayKey]) {
+                data[todayKey] = {};
+            }
+
+            // Save habits
+            habits.forEach(habit => {
+                const checkbox = document.getElementById(habit.id + '-done');
+                const done = checkbox ? checkbox.checked : false;
+
+                data[todayKey][habit.id] = { done };
+
+                // Save metrics
+                if (habit.hasMetric) {
+                    const input = document.getElementById(habit.id + '-' + habit.metricLabel);
+                    if (input && input.value) {
+                        data[todayKey][habit.id].value = parseFloat(input.value);
+                    }
+                }
+            });
+
+            // Save mood and notes
+            const mood = document.getElementById('mood').value;
+            const notes = document.getElementById('notes').value;
+
+            if (mood) data[todayKey].mood = parseInt(mood);
+            if (notes) data[todayKey].notes = notes;
+
+            saveData();
+
+            // Show success feedback
+            alert('✅ Entry saved successfully!');
+
+            // Refresh views
+            loadTodayView();
+            renderWeekCalendar();
+        }
+
+        function updateStats() {
+            const todayKey = getTodayKey();
+            const todayData = data[todayKey] || {};
+
+            // Today's completion
+            let todayCompleted = 0;
+            habits.forEach(habit => {
+                if (todayData[habit.id]?.done) todayCompleted++;
+            });
+            const todayPercent = Math.round((todayCompleted / habits.length) * 100);
+            document.getElementById('todayCompletion').textContent = todayPercent + '%';
+
+            // Week completion (based on targets)
+            const weekData = getLastNDays(7);
+            let weekExpected = 0;
+            let weekCompleted = 0;
+
+            habits.forEach(habit => {
+                weekExpected += habit.target;
+                weekData.forEach(day => {
+                    if (day.data[habit.id]?.done) weekCompleted++;
+                });
+            });
+
+            const weekPercent = weekExpected > 0 ? Math.round((weekCompleted / weekExpected) * 100) : 0;
+            document.getElementById('weekCompletion').textContent = weekPercent + '%';
+
+            // Streak
+            const streak = calculateStreak();
+            document.getElementById('weekStreak').textContent = streak;
+
+            // Month completion (approximate based on targets)
+            const monthData = getLastNDays(30);
+            let monthExpected = 0;
+            let monthCompleted = 0;
+
+            habits.forEach(habit => {
+                // Approximate 4.3 weeks in a month
+                monthExpected += Math.round(habit.target * 4.3);
+                monthData.forEach(day => {
+                    if (day.data[habit.id]?.done) monthCompleted++;
+                });
+            });
+
+            const monthPercent = monthExpected > 0 ? Math.round((monthCompleted / monthExpected) * 100) : 0;
+            document.getElementById('monthCompletion').textContent = monthPercent + '%';
+        }
+
+        function updateMotivation() {
+            // Calculate current week consistency
+            const weekData = getLastNDays(7);
+            const lastWeekData = getWeekData(-1); // Previous week
+            const currentWeekData = getWeekData(0); // This week
+
+            let iceBathCount = 0;
+            let meditationCount = 0;
+            let runningCount = 0;
+            let englishCount = 0;
+
+            weekData.forEach(day => {
+                if (day.data.icebaths?.done) iceBathCount++;
+                if (day.data.meditation?.done) meditationCount++;
+                if (day.data.running?.done) runningCount++;
+                if (day.data.english?.done) englishCount++;
+            });
+
+            // Calculate consistency percentage (based on targets)
+            const iceBathTarget = habits.find(h => h.id === 'icebaths').target;
+            const meditationTarget = habits.find(h => h.id === 'meditation').target;
+            const runningTarget = habits.find(h => h.id === 'running').target;
+            const englishTarget = habits.find(h => h.id === 'english').target;
+
+            const iceBathConsistency = Math.min(iceBathCount / iceBathTarget, 1);
+            const meditationConsistency = Math.min(meditationCount / meditationTarget, 1);
+            const runningConsistency = Math.min(runningCount / runningTarget, 1);
+            const englishConsistency = Math.min(englishCount / englishTarget, 1);
+
+            // Long-term predictions (more conservative, cumulative over time)
+            // HRV improves slowly over 6 months with ice baths + meditation
+            const hrvImpact6mo = Math.round(iceBathConsistency * 18 + meditationConsistency * 12);
+
+            // Stress reduction over 3 months
+            const stressImpact3mo = Math.round(meditationConsistency * 25 + iceBathConsistency * 15);
+
+            // Mental clarity improves faster (1 month)
+            const clarityImpact1mo = Math.round(meditationConsistency * 20 + runningConsistency * 15);
+
+            // English fluency over 6 months
+            const englishImpact6mo = Math.round(englishConsistency * 40);
+
+            document.getElementById('hrvImpact6mo').textContent = '+' + hrvImpact6mo + '%';
+            document.getElementById('stressImpact3mo').textContent = '-' + stressImpact3mo + '%';
+            document.getElementById('clarityImpact1mo').textContent = '+' + clarityImpact1mo + '%';
+            document.getElementById('englishImpact6mo').textContent = '+' + englishImpact6mo + '%';
+
+            // Week-over-week progress
+            const lastWeekPercent = calculateWeekCompletion(lastWeekData);
+            const currentWeekPercent = calculateWeekCompletion(currentWeekData);
+            const weekProgress = currentWeekPercent - lastWeekPercent;
+
+            const weekProgressEl = document.getElementById('weekProgress');
+            weekProgressEl.textContent = (weekProgress >= 0 ? '+' : '') + weekProgress + '%';
+            weekProgressEl.style.color = weekProgress >= 0 ? 'var(--success)' : 'var(--danger)';
+        }
+
+        function getWeekData(weeksAgo) {
+            // Get data for a specific week (0 = current week, -1 = last week)
+            const result = [];
+            const startOffset = weeksAgo * 7;
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - startOffset - i);
+                const key = date.toISOString().split('T')[0];
+                result.push({
+                    date: key,
+                    data: data[key] || {}
+                });
+            }
+            return result.reverse();
+        }
+
+        function calculateWeekCompletion(weekData) {
+            let totalExpected = 0;
+            let totalCompleted = 0;
+
+            habits.forEach(habit => {
+                totalExpected += habit.target;
+                weekData.forEach(day => {
+                    if (day.data[habit.id]?.done) totalCompleted++;
+                });
+            });
+
+            return totalExpected > 0 ? Math.round((totalCompleted / totalExpected) * 100) : 0;
+        }
+
+        function getLastNDays(n) {
+            const result = [];
+            for (let i = 0; i < n; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const key = date.toISOString().split('T')[0];
+                result.push({
+                    date: key,
+                    data: data[key] || {}
+                });
+            }
+            return result.reverse();
+        }
+
+        function calculateStreak() {
+            let streak = 0;
+            const today = new Date();
+
+            for (let i = 0; i < 365; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const key = date.toISOString().split('T')[0];
+                const dayData = data[key];
+
+                if (!dayData) break;
+
+                let dayCompleted = 0;
+                habits.forEach(habit => {
+                    if (dayData[habit.id]?.done) dayCompleted++;
+                });
+
+                if (dayCompleted >= 4) { // At least 4 habits done
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+
+            return streak;
+        }
+
+        function renderWeekCalendar() {
+            const container = document.getElementById('weekCalendar');
+            container.innerHTML = '';
+
+            const weekData = getLastNDays(7);
+            const todayKey = getTodayKey();
+
+            weekData.forEach(day => {
+                let completed = 0;
+                habits.forEach(habit => {
+                    if (day.data[habit.id]?.done) completed++;
+                });
+
+                const date = new Date(day.date);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayNum = date.getDate();
+
+                const isToday = day.date === todayKey;
+                const completionPercent = Math.round((completed / habits.length) * 100);
+
+                const dayCard = document.createElement('div');
+                dayCard.className = 'day-card' + (isToday ? ' today' : '') + (completionPercent === 100 ? ' completed' : '');
+                dayCard.innerHTML = `
+                    <div class="day-name">${dayName}</div>
+                    <div class="day-date">${dayNum}</div>
+                    <div class="day-completion">${completionPercent}%</div>
+                `;
+                container.appendChild(dayCard);
+            });
+        }
+
+        function loadProgressView() {
+            renderWeeklyProgress();
+            renderMonthlyProgress();
+        }
+
+        function renderWeeklyProgress() {
+            const container = document.getElementById('weeklyProgress');
+            container.innerHTML = '';
+
+            habits.forEach(habit => {
+                const weekData = getLastNDays(7);
+                let completed = 0;
+
+                weekData.forEach(day => {
+                    if (day.data[habit.id]?.done) completed++;
+                });
+
+                const target = habit.target;
+                const percent = Math.round((completed / target) * 100);
+
+                const habitEl = document.createElement('div');
+                habitEl.style.marginBottom = '16px';
+                habitEl.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>${habit.emoji} ${habit.name}</span>
+                        <span style="font-weight: 700;">${completed}/${target} (${percent}%)</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(percent, 100)}%"></div>
+                    </div>
+                `;
+                container.appendChild(habitEl);
+            });
+        }
+
+        function renderMonthlyProgress() {
+            const container = document.getElementById('monthlyProgress');
+            container.innerHTML = '';
+
+            habits.forEach(habit => {
+                const monthData = getLastNDays(30);
+                let completed = 0;
+                let totalMetric = 0;
+
+                monthData.forEach(day => {
+                    if (day.data[habit.id]?.done) {
+                        completed++;
+                        if (habit.hasMetric && day.data[habit.id]?.value) {
+                            totalMetric += day.data[habit.id].value;
+                        }
+                    }
+                });
+
+                const percent = Math.round((completed / 30) * 100);
+
+                const habitEl = document.createElement('div');
+                habitEl.style.marginBottom = '16px';
+                habitEl.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>${habit.emoji} ${habit.name}</span>
+                        <span style="font-weight: 700;">${completed}/30 (${percent}%)</span>
+                    </div>
+                    ${habit.hasMetric && totalMetric > 0 ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Total: ${totalMetric.toFixed(1)} ${habit.metricLabel}</div>` : ''}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percent}%"></div>
+                    </div>
+                `;
+                container.appendChild(habitEl);
+            });
+        }
+
+        function loadSettingsView() {
+            const container = document.getElementById('settingsHabits');
+            container.innerHTML = '';
+
+            habits.forEach(habit => {
+                const habitEl = document.createElement('div');
+                habitEl.className = 'habit-item';
+                habitEl.innerHTML = `
+                    <div class="habit-header">
+                        <span class="habit-name">${habit.emoji} ${habit.name}</span>
+                    </div>
+                    <div class="habit-metric">
+                        <label>Times per week</label>
+                        <input type="number" min="1" max="7" id="target-${habit.id}" value="${habit.target}">
+                    </div>
+                `;
+                container.appendChild(habitEl);
+            });
+        }
+
+        function saveSettings() {
+            habits.forEach(habit => {
+                const input = document.getElementById('target-' + habit.id);
+                if (input && input.value) {
+                    const newTarget = parseInt(input.value);
+                    if (newTarget >= 1 && newTarget <= 7) {
+                        habit.target = newTarget;
+                        settings[habit.id] = newTarget;
+                    }
+                }
+            });
+
+            saveSettingsData();
+            alert('✅ Settings saved successfully!');
+
+            // Refresh all views with new targets
+            updateStats();
+            updateMotivation();
+            loadProgressView();
+        }
+    </script>
+</body>
+</html>
