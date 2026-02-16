@@ -1648,62 +1648,246 @@
                 }
             });
 
-            // Physical Impact
+            // Calculate averages and rates
+            const daysSinceStart = allDates.length;
+            const weeksSinceStart = daysSinceStart / 7;
             const avgRunningKm = totalRunningDays > 0 ? (totalRunningKm / totalRunningDays).toFixed(1) : 0;
+            const avgMeditationMin = totalMeditationDays > 0 ? Math.round(totalMeditationMin / totalMeditationDays) : 0;
+            const avgFitnessMin = totalFitnessDays > 0 ? Math.round(totalFitnessMin / totalFitnessDays) : 0;
+
+            // Weekly averages
+            const runningPerWeek = weeksSinceStart > 0 ? (totalRunningDays / weeksSinceStart).toFixed(1) : 0;
+            const runningKmPerWeek = weeksSinceStart > 0 ? (totalRunningKm / weeksSinceStart).toFixed(1) : 0;
+            const icebathsPerWeek = weeksSinceStart > 0 ? (totalIceBaths / weeksSinceStart).toFixed(1) : 0;
+            const meditationPerWeek = weeksSinceStart > 0 ? (totalMeditationDays / weeksSinceStart).toFixed(1) : 0;
+            const fitnessPerWeek = weeksSinceStart > 0 ? (totalFitnessDays / weeksSinceStart).toFixed(1) : 0;
+
+            // Calories: Running burns ~60 cal per km on average
+            const totalCaloriesBurned = Math.round(totalRunningKm * 60);
+            const caloriesPerWeek = weeksSinceStart > 0 ? Math.round((totalRunningKm * 60) / weeksSinceStart) : 0;
+            const caloriesPerDay = daysSinceStart > 0 ? Math.round((totalRunningKm * 60) / daysSinceStart) : 0;
+
+            // Physical Impact
             const physicalImpactHTML = `
-                • <b>${totalRunningKm.toFixed(1)} km</b> ran = stronger heart, lower resting HR by ~5-10 BPM<br>
-                • <b>${totalIceBaths}</b> ice baths = improved HRV, faster recovery, stronger immune system<br>
-                • <b>${totalFitnessMin} minutes</b> of fitness = increased strength, muscle tone, metabolic health<br>
-                • Your cardiovascular fitness is ~<b>${Math.min(totalRunningDays * 2, 40)}% better</b> than when you started<br>
-                • You're burning an estimated <b>${Math.round(totalRunningKm * 60)} extra calories/week</b> from running alone
+                <div style="margin-bottom: 12px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">🏃 Running Statistics:</div>
+                    • Total distance: <b>${totalRunningKm.toFixed(1)} km</b> (${(totalRunningKm * 0.621371).toFixed(1)} miles)<br>
+                    • Total runs: <b>${totalRunningDays}</b> sessions<br>
+                    • Average per run: <b>${avgRunningKm} km</b><br>
+                    • Runs per week: <b>${runningPerWeek}</b> sessions<br>
+                    • Distance per week: <b>${runningKmPerWeek} km</b><br>
+                    • Consistency rate: <b>${Math.round((totalRunningDays / daysSinceStart) * 100)}%</b> of days
+                </div>
+                <div style="margin-bottom: 12px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">🔥 Calories & Energy:</div>
+                    • Total burned: <b>${totalCaloriesBurned.toLocaleString()} calories</b><br>
+                    • Average per week: <b>${caloriesPerWeek} cal/week</b><br>
+                    • Average per day: <b>${caloriesPerDay} cal/day</b><br>
+                    • Equivalent: <b>${(totalCaloriesBurned / 7700).toFixed(1)} kg</b> of fat potential loss
+                </div>
+                <div style="margin-bottom: 12px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">🧊 Ice Baths:</div>
+                    • Total sessions: <b>${totalIceBaths}</b><br>
+                    • Per week: <b>${icebathsPerWeek}</b> sessions<br>
+                    • Consistency rate: <b>${Math.round((totalIceBaths / daysSinceStart) * 100)}%</b> of days<br>
+                    • Estimated dopamine boost: <b>+250%</b> per session (lasts 2-3h)<br>
+                    • Cold adaptation progress: <b>${Math.min(totalIceBaths * 5, 100)}%</b>
+                </div>
+                <div style="margin-bottom: 12px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">💪 Fitness Training:</div>
+                    • Total sessions: <b>${totalFitnessDays}</b><br>
+                    • Total time: <b>${totalFitnessMin} minutes</b> (<b>${(totalFitnessMin / 60).toFixed(1)}h</b>)<br>
+                    • Average per session: <b>${avgFitnessMin} min</b><br>
+                    • Per week: <b>${fitnessPerWeek}</b> sessions<br>
+                    • Consistency rate: <b>${Math.round((totalFitnessDays / daysSinceStart) * 100)}%</b> of days
+                </div>
+                <div style="padding: 10px; background: rgba(99, 102, 241, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">📈 Cardiovascular Improvements:</div>
+                    • Estimated VO2 max increase: <b>+${Math.min(totalRunningDays * 0.5, 15).toFixed(1)}%</b><br>
+                    • Resting heart rate reduction: <b>-${Math.min(totalRunningDays * 0.3, 10).toFixed(0)} BPM</b><br>
+                    • Heart stroke volume: <b>+${Math.min(totalRunningDays * 0.4, 12).toFixed(1)}%</b><br>
+                    • Mitochondrial density: <b>+${Math.min(totalRunningDays * 0.6, 20).toFixed(1)}%</b>
+                </div>
             `;
             document.getElementById('physicalImpact').innerHTML = physicalImpactHTML;
 
             // Mental Impact
             const totalMeditationHours = (totalMeditationMin / 60).toFixed(1);
+            const diaryPerWeek = weeksSinceStart > 0 ? (totalDiaryDays / weeksSinceStart).toFixed(1) : 0;
+            const englishPerWeek = weeksSinceStart > 0 ? (totalEnglishDays / weeksSinceStart).toFixed(1) : 0;
+            const meditationMinPerWeek = weeksSinceStart > 0 ? Math.round(totalMeditationMin / weeksSinceStart) : 0;
+
             const mentalImpactHTML = `
-                • <b>${totalMeditationMin} minutes</b> (${totalMeditationHours}h) of meditation = thicker prefrontal cortex, better emotional control<br>
-                • <b>${totalIceBaths}</b> cold exposures = increased dopamine by ~250%, improved stress resilience<br>
-                • <b>${totalDiaryDays}</b> journal entries = better self-awareness, reduced anxiety, clearer thinking<br>
-                • <b>${totalEnglishDays}</b> English sessions = new neural connections, improved confidence<br>
-                • Your stress response is estimated <b>${Math.min(totalMeditationDays * 3, 60)}% more regulated</b> than before
+                <div style="margin-bottom: 12px; padding: 10px; background: rgba(99, 102, 241, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">🧘 Meditation Practice:</div>
+                    • Total time: <b>${totalMeditationMin} minutes</b> (<b>${totalMeditationHours} hours</b>)<br>
+                    • Total sessions: <b>${totalMeditationDays}</b><br>
+                    • Average per session: <b>${avgMeditationMin} min</b><br>
+                    • Per week: <b>${meditationPerWeek}</b> sessions, <b>${meditationMinPerWeek} min</b><br>
+                    • Consistency rate: <b>${Math.round((totalMeditationDays / daysSinceStart) * 100)}%</b> of days<br>
+                    • Estimated focus improvement: <b>+${Math.min(totalMeditationDays * 2, 50)}%</b>
+                </div>
+                <div style="margin-bottom: 12px; padding: 10px; background: rgba(99, 102, 241, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">🧊 Cold Exposure Mental Benefits:</div>
+                    • Total sessions: <b>${totalIceBaths}</b><br>
+                    • Dopamine increase per session: <b>+250%</b> (2-3 hours duration)<br>
+                    • Total dopamine boosts: <b>${totalIceBaths}</b> sustained peaks<br>
+                    • Stress resilience: <b>+${Math.min(totalIceBaths * 3, 80)}%</b><br>
+                    • Willpower training events: <b>${totalIceBaths}</b> (builds discipline)
+                </div>
+                <div style="margin-bottom: 12px; padding: 10px; background: rgba(99, 102, 241, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">📔 Journaling Impact:</div>
+                    • Total entries: <b>${totalDiaryDays}</b><br>
+                    • Per week: <b>${diaryPerWeek}</b> entries<br>
+                    • Consistency rate: <b>${Math.round((totalDiaryDays / daysSinceStart) * 100)}%</b> of days<br>
+                    • Self-awareness growth: <b>+${Math.min(totalDiaryDays * 2.5, 70)}%</b><br>
+                    • Emotional processing events: <b>${totalDiaryDays}</b><br>
+                    • Anxiety reduction: <b>-${Math.min(totalDiaryDays * 1.5, 40)}%</b>
+                </div>
+                <div style="margin-bottom: 12px; padding: 10px; background: rgba(99, 102, 241, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">🗣️ English Learning:</div>
+                    • Total sessions: <b>${totalEnglishDays}</b><br>
+                    • Per week: <b>${englishPerWeek}</b> sessions<br>
+                    • Consistency rate: <b>${Math.round((totalEnglishDays / daysSinceStart) * 100)}%</b> of days<br>
+                    • New neural connections formed: <b>~${totalEnglishDays * 50}</b><br>
+                    • Estimated vocabulary growth: <b>+${totalEnglishDays * 5} words</b><br>
+                    • Confidence improvement: <b>+${Math.min(totalEnglishDays * 3, 60)}%</b>
+                </div>
+                <div style="padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">🧠 Overall Brain Health:</div>
+                    • Prefrontal cortex thickness: <b>+${Math.min(totalMeditationDays * 0.3, 8).toFixed(1)}%</b><br>
+                    • Gray matter density: <b>+${Math.min((totalMeditationDays + totalEnglishDays) * 0.2, 6).toFixed(1)}%</b><br>
+                    • Stress hormone regulation: <b>+${Math.min((totalMeditationDays + totalIceBaths) * 2, 65)}%</b><br>
+                    • Neuroplasticity index: <b>+${Math.min((totalMeditationDays + totalEnglishDays) * 1.8, 55)}%</b>
+                </div>
             `;
             document.getElementById('mentalImpact').innerHTML = mentalImpactHTML;
 
-            // Future Projections (6 months)
+            // Future Projections (6 months & 1 year)
             const last30Days = getLastNDays(30);
             const runningHabit = habits.find(h => h.id === 'running');
             const icebathHabit = habits.find(h => h.id === 'icebaths');
             const meditationHabit = habits.find(h => h.id === 'meditation');
+            const fitnessHabit = habits.find(h => h.id === 'fitness');
+            const diaryHabit = habits.find(h => h.id === 'diary');
 
             const runningRate = last30Days.filter(d => d.data.running?.done).length / 30;
             const icebathRate = last30Days.filter(d => d.data.icebaths?.done).length / 30;
             const meditationRate = last30Days.filter(d => d.data.meditation?.done).length / 30;
+            const fitnessRate = last30Days.filter(d => d.data.fitness?.done).length / 30;
+            const diaryRate = last30Days.filter(d => d.data.diary?.done).length / 30;
 
-            const futureRunningKm = Math.round(runningRate * avgRunningKm * 180); // 6 months
-            const futureIceBaths = Math.round(icebathRate * 180);
-            const futureMeditationHours = Math.round(meditationRate * (totalMeditationMin / totalMeditationDays || 15) * 180 / 60);
+            // 6 month projections
+            const futureRunningKm6m = Math.round(runningRate * avgRunningKm * 180);
+            const futureIceBaths6m = Math.round(icebathRate * 180);
+            const futureMeditationHours6m = Math.round(meditationRate * avgMeditationMin * 180 / 60);
+            const futureFitnessHours6m = Math.round(fitnessRate * avgFitnessMin * 180 / 60);
+            const futureCalories6m = Math.round(runningRate * avgRunningKm * 60 * 180);
+            const futureDiary6m = Math.round(diaryRate * 180);
+
+            // 1 year projections
+            const futureRunningKm1y = Math.round(runningRate * avgRunningKm * 365);
+            const futureIceBaths1y = Math.round(icebathRate * 365);
+            const futureMeditationHours1y = Math.round(meditationRate * avgMeditationMin * 365 / 60);
+            const futureCalories1y = Math.round(runningRate * avgRunningKm * 60 * 365);
 
             const futureProjectionHTML = `
-                If you keep this consistency for 6 months:<br>
-                • You'll run <b>${futureRunningKm} km</b> - equivalent to running <b>${(futureRunningKm / 42.2).toFixed(0)} marathons</b><br>
-                • <b>${futureIceBaths}</b> more ice baths - significantly improved HRV & stress tolerance<br>
-                • <b>${futureMeditationHours} hours</b> of meditation - measurable brain structure changes on MRI<br>
-                • Your VO2 max will likely improve by <b>15-25%</b>, adding years to your healthspan<br>
-                • You'll be in the <b>top 5%</b> of people your age for discipline & health habits
+                <div style="margin-bottom: 16px; padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <div style="font-weight: 700; margin-bottom: 12px; font-size: 15px;">📊 6 Month Projection (at current pace):</div>
+
+                    <div style="margin-bottom: 8px;"><b>🏃 Running:</b></div>
+                    • Distance: <b>${futureRunningKm6m} km</b> (${(futureRunningKm6m * 0.621371).toFixed(0)} miles)<br>
+                    • Marathons equivalent: <b>${(futureRunningKm6m / 42.2).toFixed(1)}</b><br>
+                    • Half-marathons: <b>${(futureRunningKm6m / 21.1).toFixed(1)}</b><br>
+                    • Calories burned: <b>${futureCalories6m.toLocaleString()}</b> (<b>${(futureCalories6m / 7700).toFixed(1)} kg</b> fat loss potential)<br>
+                    • Expected VO2 max gain: <b>+${Math.min(runningRate * 180 * 0.5, 20).toFixed(1)}%</b><br>
+
+                    <div style="margin-top: 8px; margin-bottom: 8px;"><b>🧊 Ice Baths:</b></div>
+                    • Total sessions: <b>${futureIceBaths6m}</b><br>
+                    • Dopamine training events: <b>${futureIceBaths6m}</b><br>
+                    • HRV improvement: <b>+${Math.min(futureIceBaths6m * 0.8, 35).toFixed(0)}%</b><br>
+                    • Stress resilience: <b>+${Math.min(futureIceBaths6m * 1.2, 90)}%</b><br>
+
+                    <div style="margin-top: 8px; margin-bottom: 8px;"><b>🧘 Meditation:</b></div>
+                    • Total time: <b>${futureMeditationHours6m} hours</b> (${futureMeditationHours6m * 60} minutes)<br>
+                    • Brain structure changes: <b>Visible on MRI</b><br>
+                    • Gray matter increase: <b>+${Math.min(futureMeditationHours6m * 0.5, 12).toFixed(1)}%</b><br>
+                    • Focus capacity: <b>+${Math.min(futureMeditationHours6m * 2, 65)}%</b><br>
+
+                    <div style="margin-top: 8px; margin-bottom: 8px;"><b>💪 Fitness:</b></div>
+                    • Total time: <b>${futureFitnessHours6m} hours</b><br>
+                    • Muscle strength gain: <b>+${Math.min(fitnessRate * 180 * 1.5, 40)}%</b><br>
+                    • Muscle mass gain: <b>+${Math.min(fitnessRate * 180 * 0.3, 8).toFixed(1)}%</b><br>
+
+                    <div style="margin-top: 8px; margin-bottom: 8px;"><b>📔 Journaling:</b></div>
+                    • Total entries: <b>${futureDiary6m}</b><br>
+                    • Self-awareness: <b>Expert level</b><br>
+                    • Emotional intelligence: <b>+${Math.min(futureDiary6m * 2, 75)}%</b>
+                </div>
+
+                <div style="padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid var(--danger);">
+                    <div style="font-weight: 700; margin-bottom: 12px; font-size: 15px;">🚀 1 Year Projection (365 days):</div>
+
+                    • Running: <b>${futureRunningKm1y} km</b> = <b>${(futureRunningKm1y / 42.2).toFixed(1)} marathons</b><br>
+                    • Calories: <b>${futureCalories1y.toLocaleString()}</b> = <b>${(futureCalories1y / 7700).toFixed(1)} kg</b> fat loss<br>
+                    • Ice baths: <b>${futureIceBaths1y}</b> sessions<br>
+                    • Meditation: <b>${futureMeditationHours1y} hours</b><br>
+                    • VO2 max improvement: <b>+25-35%</b><br>
+                    • Biological age reduction: <b>-3 to -5 years</b><br>
+                    • You'll be in the <b>top 3%</b> of people your age<br>
+                    • Discipline level: <b>Elite tier</b> (top 1% globally)
+                </div>
             `;
             document.getElementById('futureProjection').innerHTML = futureProjectionHTML;
 
-            // Total Stats
-            const daysSinceStart = allDates.length;
+            // Total Stats Summary
             const totalStatsHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center;">
-                    <div><b>${daysSinceStart}</b><br>Days tracked</div>
-                    <div><b>${totalRunningKm.toFixed(0)} km</b><br>Distance</div>
-                    <div><b>${totalIceBaths}</b><br>Ice baths</div>
-                    <div><b>${totalMeditationHours}h</b><br>Meditation</div>
-                    <div><b>${totalDiaryDays}</b><br>Journal entries</div>
-                    <div><b>${totalEnglishDays}</b><br>English sessions</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center; margin-bottom: 16px;">
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${daysSinceStart}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Days Tracked</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--success);">${totalRunningKm.toFixed(0)} km</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Total Distance</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--warning);">${totalCaloriesBurned.toLocaleString()}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Calories Burned</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${totalIceBaths}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Ice Bath Sessions</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--success);">${totalMeditationHours}h</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Meditation Time</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--warning);">${(totalFitnessMin / 60).toFixed(1)}h</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Fitness Time</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${totalDiaryDays}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Journal Entries</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--success);">${totalEnglishDays}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">English Sessions</div>
+                    </div>
+                    <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--warning);">${weeksSinceStart.toFixed(1)}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Weeks of Data</div>
+                    </div>
+                </div>
+                <div style="border-top: 1px solid var(--border); padding-top: 12px; font-size: 12px; line-height: 1.8;">
+                    <b>Weekly Averages:</b><br>
+                    🏃 Running: ${runningPerWeek} sessions, ${runningKmPerWeek} km, ${caloriesPerWeek} cal<br>
+                    🧊 Ice Baths: ${icebathsPerWeek} sessions<br>
+                    🧘 Meditation: ${meditationPerWeek} sessions, ${meditationMinPerWeek} min<br>
+                    💪 Fitness: ${fitnessPerWeek} sessions<br>
+                    📔 Diary: ${diaryPerWeek} entries<br>
+                    🗣️ English: ${englishPerWeek} sessions
                 </div>
             `;
             document.getElementById('totalStats').innerHTML = totalStatsHTML;
