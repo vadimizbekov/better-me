@@ -751,6 +751,23 @@
                 </div>
                 <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
             </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h2 class="card-title">📥 Import Historical Data</h2>
+                </div>
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                    Import your past 45 days of habit tracking data
+                </div>
+                <textarea
+                    id="importData"
+                    class="habit-input"
+                    rows="8"
+                    placeholder="Paste your data here (we'll help you format it)..."></textarea>
+                <button class="btn btn-primary" onclick="importHistoricalData()" style="margin-top: 12px;">
+                    Import Data
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1390,6 +1407,43 @@
             updateStats();
             updateMotivation();
             loadProgressView();
+        }
+
+        async function importHistoricalData() {
+            const importText = document.getElementById('importData').value.trim();
+
+            if (!importText) {
+                alert('⚠️ Please paste your data first');
+                return;
+            }
+
+            try {
+                // Try to parse as JSON first
+                let importedData = JSON.parse(importText);
+
+                // Merge with existing data (don't overwrite existing entries)
+                Object.keys(importedData).forEach(date => {
+                    if (!data[date]) {
+                        data[date] = importedData[date];
+                    }
+                });
+
+                await saveData();
+                alert(`✅ Successfully imported ${Object.keys(importedData).length} days of data!`);
+
+                // Clear the input
+                document.getElementById('importData').value = '';
+
+                // Refresh all views
+                loadTodayView();
+                updateStats();
+                updateMotivation();
+                renderWeekCalendar();
+
+            } catch (error) {
+                alert('⚠️ Invalid data format. Please check the format and try again.\n\nExpected JSON format:\n{\n  "2026-01-15": {\n    "running": { "done": true, "value": 5 },\n    "icebaths": { "done": true }\n  }\n}');
+                console.error('Import error:', error);
+            }
         }
     </script>
 </body>
