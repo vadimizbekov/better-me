@@ -542,14 +542,14 @@
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab active" onclick="switchView('today')">Today</button>
+            <button class="tab active" onclick="switchView('overview')">Overview</button>
             <button class="tab" onclick="switchView('log')">Log Entry</button>
             <button class="tab" onclick="switchView('progress')">Progress</button>
             <button class="tab" onclick="switchView('settings')">Settings</button>
         </div>
 
-        <!-- TODAY VIEW -->
-        <div id="todayView" class="view active">
+        <!-- OVERVIEW -->
+        <div id="overviewView" class="view active">
             <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -615,9 +615,29 @@
             <!-- Today's Habits -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Today's Habits</h2>
+                    <h2 class="card-title">📋 Today's Habits</h2>
                 </div>
                 <div class="habit-list" id="todayHabits">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Weekly Overview -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📅 Weekly Overview</h2>
+                </div>
+                <div id="weeklyOverview">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Monthly Overview -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📆 Monthly Overview</h2>
+                </div>
+                <div id="monthlyOverview">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -732,22 +752,16 @@
             </div>
         </div>
 
-        <!-- PROGRESS VIEW -->
+        <!-- PROGRESS VIEW (Detailed History) -->
         <div id="progressView" class="view">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Weekly Progress</h2>
+                    <h2 class="card-title">📊 Your Complete History</h2>
                 </div>
-                <div id="weeklyProgress">
-                    <!-- Populated by JS -->
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                    All your daily habit tracking data
                 </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Monthly Overview</h2>
-                </div>
-                <div id="monthlyProgress">
+                <div id="detailedHistory" style="max-height: 70vh; overflow-y: auto;">
                     <!-- Populated by JS -->
                 </div>
             </div>
@@ -823,7 +837,7 @@
                     await loadSettingsFromFirebase();
                     loadSettingsIntoHabits();
                     updateCurrentDate();
-                    loadTodayView();
+                    loadOverviewView();
                     loadLogView();
                     updateStats();
                     updateMotivation();
@@ -975,7 +989,7 @@
             document.getElementById(view + 'View').classList.add('active');
 
             // Refresh data
-            if (view === 'today') loadTodayView();
+            if (view === 'overview') loadOverviewView();
             if (view === 'log') {
                 selectedDateKey = null; // Reset to today when switching to log view
                 loadLogView();
@@ -984,7 +998,7 @@
             if (view === 'settings') loadSettingsView();
         }
 
-        function loadTodayView() {
+        function loadOverviewView() {
             const todayKey = getTodayKey();
             const todayData = data[todayKey] || {};
 
@@ -1012,6 +1026,8 @@
 
             updateStats();
             updateMotivation();
+            renderWeeklyOverview();
+            renderMonthlyOverview();
         }
 
         let selectedDateKey = null;
@@ -1105,7 +1121,7 @@
             alert(isToday ? '✅ Entry saved to cloud successfully!' : '✅ Past entry updated successfully!');
 
             // Refresh views
-            loadTodayView();
+            loadOverviewView();
             updateStats();
             updateMotivation();
             renderWeekCalendar();
@@ -1323,12 +1339,11 @@
         }
 
         function loadProgressView() {
-            renderWeeklyProgress();
-            renderMonthlyProgress();
+            renderDetailedHistory();
         }
 
-        function renderWeeklyProgress() {
-            const container = document.getElementById('weeklyProgress');
+        function renderWeeklyOverview() {
+            const container = document.getElementById('weeklyOverview');
             container.innerHTML = '';
 
             habits.forEach(habit => {
@@ -1358,8 +1373,8 @@
             });
         }
 
-        function renderMonthlyProgress() {
-            const container = document.getElementById('monthlyProgress');
+        function renderMonthlyOverview() {
+            const container = document.getElementById('monthlyOverview');
             container.innerHTML = '';
 
             habits.forEach(habit => {
@@ -1394,6 +1409,67 @@
                     </div>
                 `;
                 container.appendChild(habitEl);
+            });
+        }
+
+        function renderDetailedHistory() {
+            const container = document.getElementById('detailedHistory');
+            container.innerHTML = '';
+
+            // Get all dates that have data, sorted newest first
+            const allDates = Object.keys(data).sort().reverse();
+
+            if (allDates.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">No data yet. Start tracking your habits!</div>';
+                return;
+            }
+
+            // Create a table-like view
+            allDates.forEach(date => {
+                const dayData = data[date];
+                const dateObj = new Date(date);
+                const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+
+                let completedCount = 0;
+                habits.forEach(habit => {
+                    if (dayData[habit.id]?.done) completedCount++;
+                });
+
+                const dayCard = document.createElement('div');
+                dayCard.style.background = 'var(--bg)';
+                dayCard.style.padding = '16px';
+                dayCard.style.borderRadius = '12px';
+                dayCard.style.marginBottom = '12px';
+                dayCard.style.border = '1px solid var(--border)';
+
+                let habitsHTML = '';
+                habits.forEach(habit => {
+                    const habitData = dayData[habit.id];
+                    const isDone = habitData?.done || false;
+                    const value = habitData?.value;
+
+                    const icon = isDone ? '✅' : '❌';
+                    const valueText = value ? ` (${value} ${habit.metricLabel})` : '';
+
+                    habitsHTML += `
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+                            <span style="font-size: 16px;">${icon}</span>
+                            <span style="flex: 1; ${isDone ? 'color: var(--text);' : 'color: var(--text-secondary); opacity: 0.6;'}">${habit.emoji} ${habit.name}${valueText}</span>
+                        </div>
+                    `;
+                });
+
+                dayCard.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div style="font-weight: 700; font-size: 16px;">${formattedDate}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">${completedCount}/${habits.length} completed</div>
+                    </div>
+                    ${habitsHTML}
+                    ${dayData.mood ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 14px; color: var(--text-secondary);">Mood: ${dayData.mood}/10</div>` : ''}
+                    ${dayData.notes ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 14px; color: var(--text-secondary); font-style: italic;">"${dayData.notes}"</div>` : ''}
+                `;
+
+                container.appendChild(dayCard);
             });
         }
 
