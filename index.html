@@ -1608,12 +1608,6 @@
         function calculateStreak() {
             let streak = 0;
 
-            // Calculate total weekly target
-            let totalWeeklyTarget = 0;
-            habits.forEach(habit => {
-                totalWeeklyTarget += habit.target;
-            });
-
             const today = new Date();
             const dayOfWeek = today.getDay();
 
@@ -1629,23 +1623,36 @@
                 const weekStart = new Date(today);
                 weekStart.setDate(today.getDate() - daysFromMonday - (weeksAgo * 7));
 
-                // Count completed habits for this week (Mon-Sun)
+                // Calculate expected target for THIS WEEK based on active habits
+                let weekExpected = 0;
                 let weekCompleted = 0;
-                for (let i = 0; i < 7; i++) {
-                    const checkDate = new Date(weekStart);
-                    checkDate.setDate(weekStart.getDate() + i);
-                    const key = checkDate.toISOString().split('T')[0];
-                    const dayData = data[key];
 
-                    if (dayData) {
-                        habits.forEach(habit => {
-                            if (dayData[habit.id]?.done) weekCompleted++;
-                        });
+                habits.forEach(habit => {
+                    let habitWeekExpected = 0;
+
+                    // Count days this week where the habit was active
+                    for (let i = 0; i < 7; i++) {
+                        const checkDate = new Date(weekStart);
+                        checkDate.setDate(weekStart.getDate() + i);
+                        const key = checkDate.toISOString().split('T')[0];
+                        const dayData = data[key];
+
+                        // Only count if habit had started by this day
+                        if (!habit.startDate || key >= habit.startDate) {
+                            habitWeekExpected++;
+                            if (dayData && dayData[habit.id]?.done) {
+                                weekCompleted++;
+                            }
+                        }
                     }
-                }
 
-                // Week counts if you hit 80%+ of your weekly targets
-                const weekPercentage = totalWeeklyTarget > 0 ? (weekCompleted / totalWeeklyTarget) : 0;
+                    // Add this habit's expected completions for the week
+                    // Scale target to actual active days
+                    weekExpected += Math.round((habit.target / 7) * habitWeekExpected);
+                });
+
+                // Week counts if you hit 80%+ of your weekly targets (respecting start dates)
+                const weekPercentage = weekExpected > 0 ? (weekCompleted / weekExpected) : 0;
                 if (weekPercentage >= 0.8) {
                     streak++;
                 } else {
