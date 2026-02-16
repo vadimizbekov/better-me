@@ -1418,18 +1418,45 @@
             }
 
             try {
+                console.log('Starting import...');
+
                 // Try to parse as JSON first
                 let importedData = JSON.parse(importText);
+                console.log('Parsed data:', importedData);
+                console.log('Number of days to import:', Object.keys(importedData).length);
+
+                let importedCount = 0;
+                let skippedCount = 0;
 
                 // Merge with existing data (don't overwrite existing entries)
                 Object.keys(importedData).forEach(date => {
-                    if (!data[date]) {
+                    // Check if date doesn't exist OR is an empty object
+                    if (!data[date] || Object.keys(data[date]).length === 0) {
                         data[date] = importedData[date];
+                        importedCount++;
+                        console.log('Imported:', date, importedData[date]);
+                    } else {
+                        skippedCount++;
+                        console.log('Skipped (already exists):', date);
                     }
                 });
 
+                console.log(`Import summary: ${importedCount} imported, ${skippedCount} skipped`);
+
+                if (importedCount === 0) {
+                    alert('ℹ️ No new data to import. All dates already exist in your tracker.');
+                    return;
+                }
+
+                console.log('Saving to Firebase...');
                 await saveData();
-                alert(`✅ Successfully imported ${Object.keys(importedData).length} days of data!`);
+                console.log('Saved to Firebase successfully');
+
+                console.log('Reloading from Firebase to verify...');
+                await loadDataFromFirebase();
+                console.log('Reloaded from Firebase');
+
+                alert(`✅ Successfully imported ${importedCount} days of data!${skippedCount > 0 ? `\n(Skipped ${skippedCount} days that already existed)` : ''}`);
 
                 // Clear the input
                 document.getElementById('importData').value = '';
@@ -1439,10 +1466,13 @@
                 updateStats();
                 updateMotivation();
                 renderWeekCalendar();
+                if (document.getElementById('progressView').classList.contains('active')) {
+                    loadProgressView();
+                }
 
             } catch (error) {
-                alert('⚠️ Invalid data format. Please check the format and try again.\n\nExpected JSON format:\n{\n  "2026-01-15": {\n    "running": { "done": true, "value": 5 },\n    "icebaths": { "done": true }\n  }\n}');
-                console.error('Import error:', error);
+                console.error('Import error details:', error);
+                alert('⚠️ Error during import: ' + error.message + '\n\nPlease check the browser console for details.');
             }
         }
     </script>
