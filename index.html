@@ -7,6 +7,7 @@
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <style>
@@ -380,10 +381,159 @@
             color: var(--success);
             margin-top: 4px;
         }
+
+        /* Auth Screen */
+        .auth-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid var(--border);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-input {
+            padding: 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .auth-toggle button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Better Me</h1>
+                <p id="authSubtitle">Sign up to start tracking your habits</p>
+            </div>
+
+            <div id="authError" class="error-message hidden"></div>
+
+            <form class="auth-form" id="authForm" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label class="form-label" for="authEmail">Email</label>
+                    <input
+                        type="email"
+                        id="authEmail"
+                        class="form-input"
+                        placeholder="your@email.com"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="authPassword">Password</label>
+                    <input
+                        type="password"
+                        id="authPassword"
+                        class="form-input"
+                        placeholder="••••••••"
+                        minlength="6"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="authButton">
+                    Sign Up
+                </button>
+            </form>
+
+            <div class="auth-toggle">
+                <span id="authToggleText">Already have an account?</span>
+                <button type="button" onclick="toggleAuthMode()">Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="container" id="mainApp" style="display: none;">
         <!-- Header -->
         <div class="header">
             <h1>Better Me</h1>
@@ -618,7 +768,15 @@
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const database = firebase.database();
+
+        // Set persistence to LOCAL (stays logged in even after closing browser)
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+        // Global variables
+        let currentUser = null;
+        let isSignUpMode = true;
 
         // Data structure with default targets
         let habits = [
@@ -634,22 +792,104 @@
         let settings = {};
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', async function() {
-            await loadDataFromFirebase();
-            await loadSettingsFromFirebase();
-            loadSettingsIntoHabits();
-            updateCurrentDate();
-            loadTodayView();
-            loadLogView();
-            updateStats();
-            updateMotivation();
-            renderWeekCalendar();
+        document.addEventListener('DOMContentLoaded', function() {
+            // Listen for auth state changes
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    // User is signed in
+                    currentUser = user;
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+
+                    // Load user data
+                    await loadDataFromFirebase();
+                    await loadSettingsFromFirebase();
+                    loadSettingsIntoHabits();
+                    updateCurrentDate();
+                    loadTodayView();
+                    loadLogView();
+                    updateStats();
+                    updateMotivation();
+                    renderWeekCalendar();
+                } else {
+                    // User is signed out
+                    currentUser = null;
+                    document.getElementById('authScreen').style.display = 'flex';
+                    document.getElementById('mainApp').style.display = 'none';
+                }
+            });
         });
+
+        // Auth Functions
+        async function handleAuth(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const errorEl = document.getElementById('authError');
+
+            errorEl.classList.add('hidden');
+
+            try {
+                if (isSignUpMode) {
+                    // Sign up new user
+                    await auth.createUserWithEmailAndPassword(email, password);
+                } else {
+                    // Sign in existing user
+                    await auth.signInWithEmailAndPassword(email, password);
+                }
+            } catch (error) {
+                errorEl.textContent = getAuthErrorMessage(error.code);
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+
+            const subtitle = document.getElementById('authSubtitle');
+            const button = document.getElementById('authButton');
+            const toggleText = document.getElementById('authToggleText');
+            const toggleButton = document.querySelector('.auth-toggle button');
+
+            if (isSignUpMode) {
+                subtitle.textContent = 'Sign up to start tracking your habits';
+                button.textContent = 'Sign Up';
+                toggleText.textContent = 'Already have an account?';
+                toggleButton.textContent = 'Sign In';
+            } else {
+                subtitle.textContent = 'Welcome back! Sign in to continue';
+                button.textContent = 'Sign In';
+                toggleText.textContent = "Don't have an account?";
+                toggleButton.textContent = 'Sign Up';
+            }
+
+            // Clear error
+            document.getElementById('authError').classList.add('hidden');
+        }
+
+        function getAuthErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/email-already-in-use':
+                    return 'This email is already registered. Please sign in instead.';
+                case 'auth/invalid-email':
+                    return 'Invalid email address.';
+                case 'auth/weak-password':
+                    return 'Password should be at least 6 characters.';
+                case 'auth/user-not-found':
+                    return 'No account found with this email.';
+                case 'auth/wrong-password':
+                    return 'Incorrect password.';
+                default:
+                    return 'An error occurred. Please try again.';
+            }
+        }
 
         // Firebase Data Functions
         async function loadDataFromFirebase() {
+            if (!currentUser) return;
             try {
-                const snapshot = await database.ref('habitData').once('value');
+                const snapshot = await database.ref(`users/${currentUser.uid}/habitData`).once('value');
                 data = snapshot.val() || {};
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -658,8 +898,9 @@
         }
 
         async function saveData() {
+            if (!currentUser) return;
             try {
-                await database.ref('habitData').set(data);
+                await database.ref(`users/${currentUser.uid}/habitData`).set(data);
             } catch (error) {
                 console.error('Error saving data:', error);
                 alert('⚠️ Error saving data. Please try again.');
@@ -667,8 +908,9 @@
         }
 
         async function loadSettingsFromFirebase() {
+            if (!currentUser) return;
             try {
-                const snapshot = await database.ref('settings').once('value');
+                const snapshot = await database.ref(`users/${currentUser.uid}/settings`).once('value');
                 settings = snapshot.val() || {};
             } catch (error) {
                 console.error('Error loading settings:', error);
@@ -677,8 +919,9 @@
         }
 
         async function saveSettingsData() {
+            if (!currentUser) return;
             try {
-                await database.ref('settings').set(settings);
+                await database.ref(`users/${currentUser.uid}/settings`).set(settings);
             } catch (error) {
                 console.error('Error saving settings:', error);
                 alert('⚠️ Error saving settings. Please try again.');
