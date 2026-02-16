@@ -1312,54 +1312,65 @@
             document.getElementById('monthCompletion').textContent = monthPercent + '%';
         }
 
+        function getCurrentWeekData() {
+            // Get current week Monday-Sunday
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, go back 6 days
+
+            const result = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - daysFromMonday + i);
+                const key = date.toISOString().split('T')[0];
+                result.push({ date: key, data: data[key] || {} });
+            }
+            return result;
+        }
+
+        function getPreviousWeekData() {
+            // Get last week Monday-Sunday
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+            const result = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - daysFromMonday - 7 + i); // Go back one week
+                const key = date.toISOString().split('T')[0];
+                result.push({ date: key, data: data[key] || {} });
+            }
+            return result;
+        }
+
+        function getMonthData(monthOffset = 0) {
+            // Get calendar month data (monthOffset: 0 = current, -1 = last month, etc.)
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + monthOffset;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            const result = [];
+            for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+                const key = d.toISOString().split('T')[0];
+                result.push({ date: key, data: data[key] || {} });
+            }
+
+            return {
+                data: result,
+                monthName: firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                daysInMonth: result.length
+            };
+        }
+
         function updateMotivation() {
-            // Calculate current week consistency (Monday-Sunday)
-            const weekData = getCurrentWeekData();
+            // Week-over-week progress
             const lastWeekData = getPreviousWeekData();
             const currentWeekData = getCurrentWeekData();
 
-            let iceBathCount = 0;
-            let meditationCount = 0;
-            let runningCount = 0;
-            let englishCount = 0;
-
-            weekData.forEach(day => {
-                if (day.data.icebaths?.done) iceBathCount++;
-                if (day.data.meditation?.done) meditationCount++;
-                if (day.data.running?.done) runningCount++;
-                if (day.data.english?.done) englishCount++;
-            });
-
-            // Calculate consistency percentage (based on targets)
-            const iceBathTarget = habits.find(h => h.id === 'icebaths').target;
-            const meditationTarget = habits.find(h => h.id === 'meditation').target;
-            const runningTarget = habits.find(h => h.id === 'running').target;
-            const englishTarget = habits.find(h => h.id === 'english').target;
-
-            const iceBathConsistency = Math.min(iceBathCount / iceBathTarget, 1);
-            const meditationConsistency = Math.min(meditationCount / meditationTarget, 1);
-            const runningConsistency = Math.min(runningCount / runningTarget, 1);
-            const englishConsistency = Math.min(englishCount / englishTarget, 1);
-
-            // Long-term predictions (more conservative, cumulative over time)
-            // HRV improves slowly over 6 months with ice baths + meditation
-            const hrvImpact6mo = Math.round(iceBathConsistency * 18 + meditationConsistency * 12);
-
-            // Stress reduction over 3 months
-            const stressImpact3mo = Math.round(meditationConsistency * 25 + iceBathConsistency * 15);
-
-            // Mental clarity improves faster (1 month)
-            const clarityImpact1mo = Math.round(meditationConsistency * 20 + runningConsistency * 15);
-
-            // English fluency over 6 months
-            const englishImpact6mo = Math.round(englishConsistency * 40);
-
-            document.getElementById('hrvImpact6mo').textContent = '+' + hrvImpact6mo + '%';
-            document.getElementById('stressImpact3mo').textContent = '-' + stressImpact3mo + '%';
-            document.getElementById('clarityImpact1mo').textContent = '+' + clarityImpact1mo + '%';
-            document.getElementById('englishImpact6mo').textContent = '+' + englishImpact6mo + '%';
-
-            // Week-over-week progress
             const lastWeekPercent = calculateWeekCompletion(lastWeekData);
             const currentWeekPercent = calculateWeekCompletion(currentWeekData);
             const weekProgress = currentWeekPercent - lastWeekPercent;
@@ -1517,6 +1528,23 @@
                 `;
                 container.appendChild(habitEl);
             });
+        }
+
+        function switchMonth(offset) {
+            selectedMonthOffset = offset;
+
+            // Update button active states
+            const buttons = document.querySelectorAll('.btn-month');
+            buttons.forEach((btn, idx) => {
+                if (idx === Math.abs(offset)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Re-render monthly overview
+            renderMonthlyOverview(offset);
         }
 
         function renderMonthlyOverview(monthOffset = 0) {
