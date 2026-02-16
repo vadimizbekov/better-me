@@ -1457,14 +1457,13 @@
             const skillsScore = englishExpected > 0 ? Math.round((english / englishExpected) * 100) : 0;
             document.getElementById('skillsScore').textContent = skillsScore + '%';
 
-            // Self-Discipline Streak (already calculated with dynamic threshold)
+            // Self-Discipline Streak (counts weeks, not days)
             const streak = calculateStreak();
-            document.getElementById('disciplineStreak').textContent = streak + ' day' + (streak !== 1 ? 's' : '');
+            document.getElementById('disciplineStreak').textContent = streak + ' week' + (streak !== 1 ? 's' : '');
 
-            // Update streak description with current threshold
+            // Update streak description
             const totalWeeklyTarget = habits.reduce((sum, h) => sum + h.target, 0);
-            const dailyThreshold = (totalWeeklyTarget / 7).toFixed(1);
-            document.getElementById('streakDescription').textContent = `Days with ${dailyThreshold}+ habits (avg/day)`;
+            document.getElementById('streakDescription').textContent = `Weeks with 80%+ completion (${Math.round(totalWeeklyTarget * 0.8)}/${totalWeeklyTarget} habits)`;
 
             // Dynamic Motivational Message
             const messages = {
@@ -1550,33 +1549,44 @@
 
         function calculateStreak() {
             let streak = 0;
-            const today = new Date();
 
-            // Calculate dynamic threshold: total weekly targets / 7
+            // Calculate total weekly target
             let totalWeeklyTarget = 0;
             habits.forEach(habit => {
                 totalWeeklyTarget += habit.target;
             });
-            const dailyThreshold = totalWeeklyTarget / 7;
 
-            for (let i = 0; i < 365; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const key = date.toISOString().split('T')[0];
-                const dayData = data[key];
+            // Check weeks going backward from current week
+            for (let weeksAgo = 0; weeksAgo < 52; weeksAgo++) {
+                const today = new Date();
+                const dayOfWeek = today.getDay();
+                const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-                if (!dayData) break;
+                // Get the Monday of the week we're checking
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - daysFromMonday - (weeksAgo * 7));
 
-                let dayCompleted = 0;
-                habits.forEach(habit => {
-                    if (dayData[habit.id]?.done) dayCompleted++;
-                });
+                // Count completed habits for this week (Mon-Sun)
+                let weekCompleted = 0;
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(weekStart);
+                    checkDate.setDate(weekStart.getDate() + i);
+                    const key = checkDate.toISOString().split('T')[0];
+                    const dayData = data[key];
 
-                // Day counts if you met or exceeded the daily average
-                if (dayCompleted >= dailyThreshold) {
+                    if (dayData) {
+                        habits.forEach(habit => {
+                            if (dayData[habit.id]?.done) weekCompleted++;
+                        });
+                    }
+                }
+
+                // Week counts if you hit 80%+ of your weekly targets
+                const weekPercentage = totalWeeklyTarget > 0 ? (weekCompleted / totalWeeklyTarget) : 0;
+                if (weekPercentage >= 0.8) {
                     streak++;
                 } else {
-                    break;
+                    break; // Streak ends
                 }
             }
 
