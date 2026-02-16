@@ -573,23 +573,26 @@
             <!-- Week Progress -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">📈 Last Week Progress</h2>
+                    <h2 class="card-title">📈 Week Comparison</h2>
                 </div>
                 <div style="text-align: center; padding: 10px;">
                     <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
-                        Week-over-week improvement
+                        This week vs. last week
                     </div>
                     <div style="font-size: 32px; font-weight: 700; color: var(--success);" id="weekProgress">
                         +0%
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                        Positive = you're improving! 💪
                     </div>
                 </div>
             </div>
 
             <!-- Motivation -->
             <div class="motivation">
-                <h3>🎯 Long-Term Health Impact</h3>
+                <h3>🎯 Long-Term Health Predictions</h3>
                 <div style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-bottom: 16px;">
-                    Based on your current consistency
+                    If you keep your current consistency, here's the expected improvement:
                 </div>
                 <div class="impact-item">
                     <span class="impact-label">HRV Improvement (6 months)</span>
@@ -622,6 +625,19 @@
 
         <!-- LOG ENTRY VIEW -->
         <div id="logView" class="view">
+            <!-- Date Picker -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <label style="font-weight: 600; min-width: 80px;">Edit date:</label>
+                    <input
+                        type="date"
+                        id="selectedDate"
+                        class="habit-input"
+                        style="flex: 1; margin: 0;"
+                        onchange="loadSelectedDate()">
+                </div>
+            </div>
+
             <!-- Week Calendar -->
             <div class="week-calendar" id="weekCalendar">
                 <!-- Populated by JS -->
@@ -752,22 +768,6 @@
                 <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
             </div>
 
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-header">
-                    <h2 class="card-title">📥 Import Historical Data</h2>
-                </div>
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
-                    Import your past 45 days of habit tracking data
-                </div>
-                <textarea
-                    id="importData"
-                    class="habit-input"
-                    rows="8"
-                    placeholder="Paste your data here (we'll help you format it)..."></textarea>
-                <button class="btn btn-primary" onclick="importHistoricalData()" style="margin-top: 12px;">
-                    Import Data
-                </button>
-            </div>
         </div>
     </div>
 
@@ -976,7 +976,10 @@
 
             // Refresh data
             if (view === 'today') loadTodayView();
-            if (view === 'log') loadLogView();
+            if (view === 'log') {
+                selectedDateKey = null; // Reset to today when switching to log view
+                loadLogView();
+            }
             if (view === 'progress') loadProgressView();
             if (view === 'settings') loadSettingsView();
         }
@@ -1011,14 +1014,24 @@
             updateMotivation();
         }
 
+        let selectedDateKey = null;
+
         function loadLogView() {
-            const todayKey = getTodayKey();
-            const todayData = data[todayKey] || {};
+            const dateKey = selectedDateKey || getTodayKey();
+            const dateData = data[dateKey] || {};
+
+            // Update date picker
+            document.getElementById('selectedDate').value = dateKey;
+
+            // Update review date display
+            const date = new Date(dateKey);
+            const isToday = dateKey === getTodayKey();
+            document.getElementById('reviewDate').textContent = isToday ? 'Today' : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
             // Load checkbox states
             habits.forEach(habit => {
                 const checkbox = document.getElementById(habit.id + '-done');
-                const habitData = todayData[habit.id] || {};
+                const habitData = dateData[habit.id] || {};
 
                 if (checkbox) {
                     checkbox.checked = habitData.done || false;
@@ -1028,15 +1041,20 @@
                 // Load metric values
                 if (habit.hasMetric) {
                     const input = document.getElementById(habit.id + '-' + habit.metricLabel);
-                    if (input && habitData.value) {
-                        input.value = habitData.value;
+                    if (input) {
+                        input.value = habitData.value || '';
                     }
                 }
             });
 
             // Load mood and notes
-            if (todayData.mood) document.getElementById('mood').value = todayData.mood;
-            if (todayData.notes) document.getElementById('notes').value = todayData.notes;
+            document.getElementById('mood').value = dateData.mood || '';
+            document.getElementById('notes').value = dateData.notes || '';
+        }
+
+        function loadSelectedDate() {
+            selectedDateKey = document.getElementById('selectedDate').value;
+            loadLogView();
         }
 
         function updateHabitStatus(habitId) {
@@ -1051,10 +1069,10 @@
         }
 
         async function saveEntry() {
-            const todayKey = getTodayKey();
+            const dateKey = selectedDateKey || getTodayKey();
 
-            if (!data[todayKey]) {
-                data[todayKey] = {};
+            if (!data[dateKey]) {
+                data[dateKey] = {};
             }
 
             // Save habits
@@ -1062,13 +1080,13 @@
                 const checkbox = document.getElementById(habit.id + '-done');
                 const done = checkbox ? checkbox.checked : false;
 
-                data[todayKey][habit.id] = { done };
+                data[dateKey][habit.id] = { done };
 
                 // Save metrics
                 if (habit.hasMetric) {
                     const input = document.getElementById(habit.id + '-' + habit.metricLabel);
                     if (input && input.value) {
-                        data[todayKey][habit.id].value = parseFloat(input.value);
+                        data[dateKey][habit.id].value = parseFloat(input.value);
                     }
                 }
             });
@@ -1077,16 +1095,19 @@
             const mood = document.getElementById('mood').value;
             const notes = document.getElementById('notes').value;
 
-            if (mood) data[todayKey].mood = parseInt(mood);
-            if (notes) data[todayKey].notes = notes;
+            if (mood) data[dateKey].mood = parseInt(mood);
+            if (notes) data[dateKey].notes = notes;
 
             await saveData();
 
             // Show success feedback
-            alert('✅ Entry saved to cloud successfully!');
+            const isToday = dateKey === getTodayKey();
+            alert(isToday ? '✅ Entry saved to cloud successfully!' : '✅ Past entry updated successfully!');
 
             // Refresh views
             loadTodayView();
+            updateStats();
+            updateMotivation();
             renderWeekCalendar();
         }
 
@@ -1293,6 +1314,10 @@
                     <div class="day-date">${dayNum}</div>
                     <div class="day-completion">${completionPercent}%</div>
                 `;
+                dayCard.onclick = () => {
+                    selectedDateKey = day.date;
+                    loadLogView();
+                };
                 container.appendChild(dayCard);
             });
         }
@@ -1315,17 +1340,18 @@
                 });
 
                 const target = habit.target;
-                const percent = Math.round((completed / target) * 100);
+                const percent = Math.min(Math.round((completed / target) * 100), 100);
+                const displayCompleted = Math.min(completed, target);
 
                 const habitEl = document.createElement('div');
                 habitEl.style.marginBottom = '16px';
                 habitEl.innerHTML = `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <span>${habit.emoji} ${habit.name}</span>
-                        <span style="font-weight: 700;">${completed}/${target} (${percent}%)</span>
+                        <span style="font-weight: 700;">${displayCompleted}/${target} (${percent}%)${completed > target ? ' 🔥' : ''}</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${Math.min(percent, 100)}%"></div>
+                        <div class="progress-fill" style="width: ${percent}%"></div>
                     </div>
                 `;
                 container.appendChild(habitEl);
@@ -1350,14 +1376,17 @@
                     }
                 });
 
-                const percent = Math.round((completed / 30) * 100);
+                // Calculate monthly target based on weekly target * 4.3 weeks per month
+                const monthlyTarget = Math.round(habit.target * 4.3);
+                const percent = Math.min(Math.round((completed / monthlyTarget) * 100), 100);
+                const displayCompleted = Math.min(completed, monthlyTarget);
 
                 const habitEl = document.createElement('div');
                 habitEl.style.marginBottom = '16px';
                 habitEl.innerHTML = `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <span>${habit.emoji} ${habit.name}</span>
-                        <span style="font-weight: 700;">${completed}/30 (${percent}%)</span>
+                        <span style="font-weight: 700;">${displayCompleted}/${monthlyTarget} (${percent}%)${completed > monthlyTarget ? ' 🔥' : ''}</span>
                     </div>
                     ${habit.hasMetric && totalMetric > 0 ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Total: ${totalMetric.toFixed(1)} ${habit.metricLabel}</div>` : ''}
                     <div class="progress-bar">
@@ -1409,72 +1438,6 @@
             loadProgressView();
         }
 
-        async function importHistoricalData() {
-            const importText = document.getElementById('importData').value.trim();
-
-            if (!importText) {
-                alert('⚠️ Please paste your data first');
-                return;
-            }
-
-            try {
-                console.log('Starting import...');
-
-                // Try to parse as JSON first
-                let importedData = JSON.parse(importText);
-                console.log('Parsed data:', importedData);
-                console.log('Number of days to import:', Object.keys(importedData).length);
-
-                let importedCount = 0;
-                let skippedCount = 0;
-
-                // Merge with existing data (don't overwrite existing entries)
-                Object.keys(importedData).forEach(date => {
-                    // Check if date doesn't exist OR is an empty object
-                    if (!data[date] || Object.keys(data[date]).length === 0) {
-                        data[date] = importedData[date];
-                        importedCount++;
-                        console.log('Imported:', date, importedData[date]);
-                    } else {
-                        skippedCount++;
-                        console.log('Skipped (already exists):', date);
-                    }
-                });
-
-                console.log(`Import summary: ${importedCount} imported, ${skippedCount} skipped`);
-
-                if (importedCount === 0) {
-                    alert('ℹ️ No new data to import. All dates already exist in your tracker.');
-                    return;
-                }
-
-                console.log('Saving to Firebase...');
-                await saveData();
-                console.log('Saved to Firebase successfully');
-
-                console.log('Reloading from Firebase to verify...');
-                await loadDataFromFirebase();
-                console.log('Reloaded from Firebase');
-
-                alert(`✅ Successfully imported ${importedCount} days of data!${skippedCount > 0 ? `\n(Skipped ${skippedCount} days that already existed)` : ''}`);
-
-                // Clear the input
-                document.getElementById('importData').value = '';
-
-                // Refresh all views
-                loadTodayView();
-                updateStats();
-                updateMotivation();
-                renderWeekCalendar();
-                if (document.getElementById('progressView').classList.contains('active')) {
-                    loadProgressView();
-                }
-
-            } catch (error) {
-                console.error('Import error details:', error);
-                alert('⚠️ Error during import: ' + error.message + '\n\nPlease check the browser console for details.');
-            }
-        }
     </script>
 </body>
 </html>
