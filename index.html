@@ -923,14 +923,14 @@
         let currentUser = null;
         let isSignUpMode = true;
 
-        // Data structure with default targets
+        // Data structure with default targets and start dates
         let habits = [
-            { id: 'running', name: 'Running', emoji: '🏃', hasMetric: true, metricLabel: 'km', target: 4 },
-            { id: 'icebaths', name: 'Ice Baths', emoji: '🧊', hasMetric: false, target: 7 },
-            { id: 'meditation', name: 'Meditation', emoji: '🧘', hasMetric: true, metricLabel: 'min', target: 7 },
-            { id: 'diary', name: 'Diary', emoji: '📔', hasMetric: false, target: 7 },
-            { id: 'english', name: 'English', emoji: '🗣️', hasMetric: false, target: 3 },
-            { id: 'fitness', name: 'Fitness', emoji: '💪', hasMetric: true, metricLabel: 'min', target: 3 }
+            { id: 'running', name: 'Running', emoji: '🏃', hasMetric: true, metricLabel: 'km', target: 4, startDate: null },
+            { id: 'icebaths', name: 'Ice Baths', emoji: '🧊', hasMetric: false, target: 7, startDate: null },
+            { id: 'meditation', name: 'Meditation', emoji: '🧘', hasMetric: true, metricLabel: 'min', target: 7, startDate: null },
+            { id: 'diary', name: 'Diary', emoji: '📔', hasMetric: false, target: 7, startDate: null },
+            { id: 'english', name: 'English', emoji: '🗣️', hasMetric: false, target: 3, startDate: null },
+            { id: 'fitness', name: 'Fitness', emoji: '💪', hasMetric: true, metricLabel: 'min', target: 3, startDate: null }
         ];
 
         let data = {};
@@ -1073,10 +1073,13 @@
         }
 
         function loadSettingsIntoHabits() {
-            // Update habit targets from saved settings
+            // Update habit targets and start dates from saved settings
             habits.forEach(habit => {
                 if (settings[habit.id] !== undefined) {
                     habit.target = settings[habit.id];
+                }
+                if (settings[habit.id + '_startDate'] !== undefined) {
+                    habit.startDate = settings[habit.id + '_startDate'];
                 }
             });
         }
@@ -1326,24 +1329,34 @@
             const todayKey = getTodayKey();
             const todayData = data[todayKey] || {};
 
-            // Today's completion
+            // Today's completion (only count habits that have started)
             let todayCompleted = 0;
+            let todayActiveHabits = 0;
             habits.forEach(habit => {
-                if (todayData[habit.id]?.done) todayCompleted++;
+                if (!habit.startDate || todayKey >= habit.startDate) {
+                    todayActiveHabits++;
+                    if (todayData[habit.id]?.done) todayCompleted++;
+                }
             });
-            const todayPercent = Math.round((todayCompleted / habits.length) * 100);
+            const todayPercent = todayActiveHabits > 0 ? Math.round((todayCompleted / todayActiveHabits) * 100) : 0;
             document.getElementById('todayCompletion').textContent = todayPercent + '%';
 
-            // Week completion (Monday-Sunday based on targets)
+            // Week completion (Monday-Sunday, respecting start dates)
             const weekData = getCurrentWeekData();
             let weekExpected = 0;
             let weekCompleted = 0;
 
             habits.forEach(habit => {
-                weekExpected += habit.target;
+                let habitWeekExpected = 0;
                 weekData.forEach(day => {
-                    if (day.data[habit.id]?.done) weekCompleted++;
+                    if (!habit.startDate || day.date >= habit.startDate) {
+                        habitWeekExpected++;
+                        if (day.data[habit.id]?.done) weekCompleted++;
+                    }
                 });
+                // Scale target to actual active days in this week
+                const daysActive = habitWeekExpected;
+                weekExpected += Math.round((habit.target / 7) * daysActive);
             });
 
             const weekPercent = weekExpected > 0 ? Math.round((weekCompleted / weekExpected) * 100) : 0;
@@ -1353,18 +1366,22 @@
             const streak = calculateStreak();
             document.getElementById('weekStreak').textContent = streak;
 
-            // Month completion (calendar month based on targets)
+            // Month completion (calendar month, respecting start dates)
             const monthInfo = getMonthData(0); // Current month
             const monthData = monthInfo.data;
             let monthExpected = 0;
             let monthCompleted = 0;
 
             habits.forEach(habit => {
-                const weeksInMonth = Math.floor(monthInfo.daysInMonth / 7);
-                monthExpected += habit.target * weeksInMonth;
+                let habitMonthExpected = 0;
                 monthData.forEach(day => {
-                    if (day.data[habit.id]?.done) monthCompleted++;
+                    if (!habit.startDate || day.date >= habit.startDate) {
+                        habitMonthExpected++;
+                        if (day.data[habit.id]?.done) monthCompleted++;
+                    }
                 });
+                // Scale target to actual active days in this month
+                monthExpected += Math.round((habit.target / 7) * habitMonthExpected);
             });
 
             const monthPercent = monthExpected > 0 ? Math.round((monthCompleted / monthExpected) * 100) : 0;
@@ -1429,54 +1446,72 @@
             // Use last 30 days rolling (never resets)
             const last30Days = getLastNDays(30);
 
-            // Calculate habit completion for last 30 days
+            // Helper function to count days a habit was active in the period
+            function getActiveDays(habit) {
+                if (!habit.startDate) return last30Days.length; // No start date = active for all days
+
+                let activeDays = 0;
+                last30Days.forEach(day => {
+                    if (day.date >= habit.startDate) activeDays++;
+                });
+                return activeDays;
+            }
+
+            // Calculate habit completion for last 30 days (respecting start dates)
             let running = 0, icebaths = 0, meditation = 0, diary = 0, english = 0, fitness = 0;
             let totalCompleted = 0, totalExpected = 0;
 
+            const runningHabit = habits.find(h => h.id === 'running');
+            const icebathHabit = habits.find(h => h.id === 'icebaths');
+            const meditationHabit = habits.find(h => h.id === 'meditation');
+            const diaryHabit = habits.find(h => h.id === 'diary');
+            const englishHabit = habits.find(h => h.id === 'english');
+            const fitnessHabit = habits.find(h => h.id === 'fitness');
+
             last30Days.forEach(day => {
-                if (day.data.running?.done) running++;
-                if (day.data.icebaths?.done) icebaths++;
-                if (day.data.meditation?.done) meditation++;
-                if (day.data.diary?.done) diary++;
-                if (day.data.english?.done) english++;
-                if (day.data.fitness?.done) fitness++;
+                if (day.date >= (runningHabit.startDate || '2000-01-01') && day.data.running?.done) running++;
+                if (day.date >= (icebathHabit.startDate || '2000-01-01') && day.data.icebaths?.done) icebaths++;
+                if (day.date >= (meditationHabit.startDate || '2000-01-01') && day.data.meditation?.done) meditation++;
+                if (day.date >= (diaryHabit.startDate || '2000-01-01') && day.data.diary?.done) diary++;
+                if (day.date >= (englishHabit.startDate || '2000-01-01') && day.data.english?.done) english++;
+                if (day.date >= (fitnessHabit.startDate || '2000-01-01') && day.data.fitness?.done) fitness++;
             });
 
-            // Expected in 30 days = (weekly target / 7) * 30 days
-            const runningTarget = habits.find(h => h.id === 'running').target;
-            const icebathTarget = habits.find(h => h.id === 'icebaths').target;
-            const meditationTarget = habits.find(h => h.id === 'meditation').target;
-            const diaryTarget = habits.find(h => h.id === 'diary').target;
-            const englishTarget = habits.find(h => h.id === 'english').target;
-            const fitnessTarget = habits.find(h => h.id === 'fitness').target;
+            // Expected based on active days only
+            const runningActiveDays = getActiveDays(runningHabit);
+            const icebathActiveDays = getActiveDays(icebathHabit);
+            const meditationActiveDays = getActiveDays(meditationHabit);
+            const diaryActiveDays = getActiveDays(diaryHabit);
+            const englishActiveDays = getActiveDays(englishHabit);
+            const fitnessActiveDays = getActiveDays(fitnessHabit);
 
-            const runningExpected = Math.round((runningTarget / 7) * 30);
-            const icebathExpected = Math.round((icebathTarget / 7) * 30);
-            const meditationExpected = Math.round((meditationTarget / 7) * 30);
-            const diaryExpected = Math.round((diaryTarget / 7) * 30);
-            const englishExpected = Math.round((englishTarget / 7) * 30);
-            const fitnessExpected = Math.round((fitnessTarget / 7) * 30);
+            const runningExpected = Math.round((runningHabit.target / 7) * runningActiveDays);
+            const icebathExpected = Math.round((icebathHabit.target / 7) * icebathActiveDays);
+            const meditationExpected = Math.round((meditationHabit.target / 7) * meditationActiveDays);
+            const diaryExpected = Math.round((diaryHabit.target / 7) * diaryActiveDays);
+            const englishExpected = Math.round((englishHabit.target / 7) * englishActiveDays);
+            const fitnessExpected = Math.round((fitnessHabit.target / 7) * fitnessActiveDays);
 
             totalExpected = runningExpected + icebathExpected + meditationExpected + diaryExpected + englishExpected + fitnessExpected;
             totalCompleted = running + icebaths + meditation + diary + english + fitness;
 
-            // Overall Discipline Score (last 30 days)
+            // Overall Discipline Score (last 30 days, respecting start dates)
             const disciplineScore = totalExpected > 0 ? Math.round((totalCompleted / totalExpected) * 100) : 0;
             document.getElementById('disciplineScore').textContent = disciplineScore + '%';
 
-            // Physical: Running + Fitness
+            // Physical: Running + Fitness (respecting start dates)
             const physicalExpected = runningExpected + fitnessExpected;
             const physicalCompleted = running + fitness;
             const physicalScore = physicalExpected > 0 ? Math.round((physicalCompleted / physicalExpected) * 100) : 0;
             document.getElementById('physicalScore').textContent = physicalScore + '%';
 
-            // Mental: Ice Baths + Meditation + Diary
+            // Mental: Ice Baths + Meditation + Diary (respecting start dates)
             const mentalExpected = icebathExpected + meditationExpected + diaryExpected;
             const mentalCompleted = icebaths + meditation + diary;
             const mentalScore = mentalExpected > 0 ? Math.round((mentalCompleted / mentalExpected) * 100) : 0;
             document.getElementById('mentalScore').textContent = mentalScore + '%';
 
-            // Skills: English
+            // Skills: English (respecting start date)
             const skillsScore = englishExpected > 0 ? Math.round((english / englishExpected) * 100) : 0;
             document.getElementById('skillsScore').textContent = skillsScore + '%';
 
@@ -1862,6 +1897,10 @@
                         <label>Times per week</label>
                         <input type="number" min="1" max="7" id="target-${habit.id}" value="${habit.target}">
                     </div>
+                    <div class="habit-metric" style="margin-top: 12px;">
+                        <label>Start date</label>
+                        <input type="date" id="startDate-${habit.id}" value="${habit.startDate || ''}" style="flex: 1;">
+                    </div>
                 `;
                 container.appendChild(habitEl);
             });
@@ -1869,20 +1908,26 @@
 
         async function saveSettings() {
             habits.forEach(habit => {
-                const input = document.getElementById('target-' + habit.id);
-                if (input && input.value) {
-                    const newTarget = parseInt(input.value);
+                const targetInput = document.getElementById('target-' + habit.id);
+                if (targetInput && targetInput.value) {
+                    const newTarget = parseInt(targetInput.value);
                     if (newTarget >= 1 && newTarget <= 7) {
                         habit.target = newTarget;
                         settings[habit.id] = newTarget;
                     }
+                }
+
+                const startDateInput = document.getElementById('startDate-' + habit.id);
+                if (startDateInput && startDateInput.value) {
+                    habit.startDate = startDateInput.value;
+                    settings[habit.id + '_startDate'] = startDateInput.value;
                 }
             });
 
             await saveSettingsData();
             alert('✅ Settings saved to cloud successfully!');
 
-            // Refresh all views with new targets
+            // Refresh all views with new targets and start dates
             updateStats();
             updateMotivation();
             renderWeeklyOverview();
