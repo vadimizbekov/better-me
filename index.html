@@ -805,8 +805,12 @@
             <!-- This Week (Mon-Sun) -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">📅 This Week</h2>
-                    <span id="weekRange" style="font-size: 12px; color: var(--text-secondary);"></span>
+                    <h2 class="card-title">📅 <span id="weekTitle">This Week</span></h2>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button onclick="changeWeek(-1)" style="background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 16px;">←</button>
+                        <span id="weekRange" style="font-size: 12px; color: var(--text-secondary); min-width: 120px; text-align: center;"></span>
+                        <button onclick="changeWeek(1)" id="weekNextBtn" style="background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 16px;">→</button>
+                    </div>
                 </div>
                 <div id="weeklyOverview">
                     <!-- Populated by JS -->
@@ -1109,12 +1113,31 @@
         function loadOverviewView() {
             updateStats();
             updateMotivation();
-            renderWeeklyOverview();
+            renderWeeklyOverview(selectedWeekOffset);
             renderMonthlyOverview(selectedMonthOffset);
+        }
+
+        function changeWeek(direction) {
+            selectedWeekOffset += direction;
+            renderWeeklyOverview(selectedWeekOffset);
+
+            // Update next button state (disable if viewing current week)
+            const nextBtn = document.getElementById('weekNextBtn');
+            if (selectedWeekOffset >= 0) {
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = '0.3';
+                nextBtn.style.cursor = 'not-allowed';
+                selectedWeekOffset = 0; // Can't go beyond current week
+            } else {
+                nextBtn.disabled = false;
+                nextBtn.style.opacity = '1';
+                nextBtn.style.cursor = 'pointer';
+            }
         }
 
         let selectedDateKey = null;
         let selectedMonthOffset = 0; // 0 = this month, -1 = last month, etc.
+        let selectedWeekOffset = 0; // 0 = this week, -1 = last week, etc.
 
         function loadTrackerView() {
             renderModernHabits();
@@ -1629,12 +1652,28 @@
             });
         }
 
-        function renderWeeklyOverview() {
+        function renderWeeklyOverview(weekOffset = 0) {
             const container = document.getElementById('weeklyOverview');
             container.innerHTML = '';
 
-            // Get current week (Monday-Sunday)
-            const weekData = getCurrentWeekData();
+            // Get week data based on offset
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+            const weekData = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - daysFromMonday + i + (weekOffset * 7));
+                const key = date.toISOString().split('T')[0];
+                weekData.push({ date: key, data: data[key] || {} });
+            }
+
+            // Update week title
+            const weekTitle = weekOffset === 0 ? 'This Week' :
+                             weekOffset === -1 ? 'Last Week' :
+                             `${Math.abs(weekOffset)} Weeks Ago`;
+            document.getElementById('weekTitle').textContent = weekTitle;
 
             // Update week range display
             const firstDay = new Date(weekData[0].date);
