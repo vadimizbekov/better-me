@@ -1579,10 +1579,15 @@
                 totalWeeklyTarget += habit.target;
             });
 
-            // Check weeks going backward from current week
-            for (let weeksAgo = 0; weeksAgo < 52; weeksAgo++) {
-                const today = new Date();
-                const dayOfWeek = today.getDay();
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+
+            // Start from last week if current week is incomplete (not Sunday)
+            // Only count complete weeks for the streak
+            const startWeek = (dayOfWeek === 0) ? 0 : 1; // If Sunday, include current week; otherwise start from last week
+
+            // Check weeks going backward from most recent complete week
+            for (let weeksAgo = startWeek; weeksAgo < 52; weeksAgo++) {
                 const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
                 // Get the Monday of the week we're checking
