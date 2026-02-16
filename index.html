@@ -792,7 +792,7 @@
                             <span style="font-size: 14px;">🎯 Self-Discipline</span>
                             <span style="font-weight: 700; color: var(--success);" id="disciplineStreak">0 days</span>
                         </div>
-                        <div style="font-size: 11px; color: var(--text-secondary);">Days with 4+ habits completed</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);" id="streakDescription">Streak of consistent days</div>
                     </div>
                 </div>
 
@@ -1457,9 +1457,14 @@
             const skillsScore = englishExpected > 0 ? Math.round((english / englishExpected) * 100) : 0;
             document.getElementById('skillsScore').textContent = skillsScore + '%';
 
-            // Self-Discipline Streak (already calculated)
+            // Self-Discipline Streak (already calculated with dynamic threshold)
             const streak = calculateStreak();
             document.getElementById('disciplineStreak').textContent = streak + ' day' + (streak !== 1 ? 's' : '');
+
+            // Update streak description with current threshold
+            const totalWeeklyTarget = habits.reduce((sum, h) => sum + h.target, 0);
+            const dailyThreshold = (totalWeeklyTarget / 7).toFixed(1);
+            document.getElementById('streakDescription').textContent = `Days with ${dailyThreshold}+ habits (avg/day)`;
 
             // Dynamic Motivational Message
             const messages = {
@@ -1547,6 +1552,13 @@
             let streak = 0;
             const today = new Date();
 
+            // Calculate dynamic threshold: total weekly targets / 7
+            let totalWeeklyTarget = 0;
+            habits.forEach(habit => {
+                totalWeeklyTarget += habit.target;
+            });
+            const dailyThreshold = totalWeeklyTarget / 7;
+
             for (let i = 0; i < 365; i++) {
                 const date = new Date(today);
                 date.setDate(date.getDate() - i);
@@ -1560,7 +1572,8 @@
                     if (dayData[habit.id]?.done) dayCompleted++;
                 });
 
-                if (dayCompleted >= 4) { // At least 4 habits done
+                // Day counts if you met or exceeded the daily average
+                if (dayCompleted >= dailyThreshold) {
                     streak++;
                 } else {
                     break;
