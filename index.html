@@ -2717,13 +2717,21 @@ Be supportive, realistic, and evidence-based. Provide specific insights based on
 
                 conversationText += `\nUser: ${message}\nAssistant:`;
 
-                // Try to list available models first if this is the first message
-                if (aiChatHistory.length === 1) {
+                // List available models on first message - SHOW IN CHAT
+                if (aiChatHistory.length === 2) {
                     try {
                         const modelsResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GOOGLE_AI_API_KEY}`);
                         if (modelsResponse.ok) {
                             const modelsData = await modelsResponse.json();
-                            console.log('Available models:', modelsData.models.map(m => m.name));
+                            const modelNames = modelsData.models
+                                .filter(m => m.name.includes('gemini'))
+                                .map(m => m.name.replace('models/', ''))
+                                .join('\n• ');
+
+                            removeAITyping();
+                            addAIMessage('assistant', `📋 DEBUG: Available models:\n\n• ${modelNames}\n\nTrying to connect now...`);
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            showAITyping();
                         }
                     } catch (e) {
                         console.log('Could not list models:', e);
@@ -2767,15 +2775,19 @@ Be supportive, realistic, and evidence-based. Provide specific insights based on
                 console.error('AI Chat error:', error);
                 removeAITyping();
 
-                let errorMsg = '❌ Sorry, I encountered an error.';
+                let errorMsg = '❌ Error Details:\n\n';
                 if (error.message.includes('404')) {
-                    errorMsg += ' The API endpoint might be incorrect or the model is unavailable.';
+                    errorMsg += '404: Model not found\n\n';
+                    errorMsg += 'Tried: gemini-1.5-flash-latest\n\n';
+                    errorMsg += 'This model might not be available with your API key.';
                 } else if (error.message.includes('403') || error.message.includes('401')) {
-                    errorMsg += ' API key authentication failed. Please check your Google AI API key.';
+                    errorMsg += '403/401: Authentication failed\n\n';
+                    errorMsg += 'Your API key might be invalid or expired.';
                 } else if (error.message.includes('429')) {
-                    errorMsg += ' Rate limit exceeded. Please wait a moment and try again.';
+                    errorMsg += '429: Rate limit exceeded\n\n';
+                    errorMsg += 'Wait a moment and try again.';
                 } else {
-                    errorMsg += ' ' + error.message;
+                    errorMsg += 'Full error:\n' + error.message.substring(0, 500);
                 }
 
                 addAIMessage('assistant', errorMsg);
